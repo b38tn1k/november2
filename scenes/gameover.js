@@ -1,13 +1,13 @@
 
 
-export function loadLevel1(p) {
+export function loadGameOver(p) {
   return {
     init() {
-      console.log("🎮 Level 1 started");
+      console.log("💀 Game Over Screen");
     },
 
     update() {
-      // Example: Return to menu on key press
+      // Example: Go to menu on key press
       if (p.keyIsPressed && p.key === 'm') {
         p.shared.sceneManager.change('menu');
       }
@@ -18,17 +18,17 @@ export function loadLevel1(p) {
       r.use('default');
       r.drawScene(() => {
         p.push();
-        p.background(50, 0, 100);
+        p.background(100, 0, 0);
         p.fill(255);
         p.textAlign(p.CENTER, p.CENTER);
         p.textSize(42);
-        p.text("Level 1 Running\nPress M for Menu", 0, 0);
+        p.text("Game Over\nPress M for Menu", 0, 0);
         p.pop();
       });
     },
 
     cleanup() {
-      console.log("🧹 Level 1 cleanup");
+      console.log("🧹 Game Over cleanup");
     },
   };
 }

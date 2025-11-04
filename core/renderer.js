@@ -14,6 +14,9 @@ const fsDefault = `
   precision mediump float;
   varying vec2 vTexCoord;
   uniform sampler2D tex0;
+  uniform vec2 uResolution;
+  uniform vec2 uMouse;
+  uniform float uTime;
   void main() {
     gl_FragColor = texture2D(tex0, vTexCoord);
   }
@@ -46,19 +49,37 @@ export async function createRenderer(p) {
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
     },
 
+    updateUniforms(p) {
+      if (!this.activeShader) return;
+      const t = p.millis() / 1000.0;
+      const res = [p.width, p.height];
+      const mouse = [p.mouseX, p.mouseY];
+
+      try {
+        this.activeShader.setUniform('uTime', t);
+        this.activeShader.setUniform('uResolution', res);
+        this.activeShader.setUniform('uMouse', mouse);
+      } catch (err) {
+        // Ignore errors for shaders that don't define these uniforms
+      }
+    },
+
     use(shaderName = 'default') {
       const shader = this.shaders[shaderName];
       if (shader) {
         this.activeShader = shader;
         p.shader(shader);
+        this.updateUniforms(p);
       } else {
         console.warn(`⚠️ Shader "${shaderName}" not found; reverting to default`);
         this.activeShader = this.shaders.default;
         p.shader(this.activeShader);
+        this.updateUniforms(p);
       }
     },
 
     drawScene(drawFn) {
+      this.updateUniforms(p);
       if (this.activeShader) p.shader(this.activeShader);
       drawFn(this.layers.main);
     },

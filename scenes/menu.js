@@ -1,11 +1,45 @@
 export function loadMenu(p) {
-  p.activeScene = {
+  return {
+    init() {
+      console.log("📜 Menu initialized");
+    },
+
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+    
+
+    onKeyPressed(key, keyCode) {
+      console.log(`Key pressed in Menu: ${key} (${keyCode})`);
+      p.shared.sceneManager.change('level1');
+    },
+
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+    // NEED TO DO THIS IN LEVEL AND GAMEOVER!!!
+
+
+    update() {
+      // Menu update loop (no direct key checks; handled via controls)
+    },
+
     draw() {
       const r = p.shared.renderer;
-      r.use('default');
-      p.fill(255);
-      p.textAlign(p.CENTER, p.CENTER);
-      p.text('Menu Scene', 0, 0);
-    }
+      r.use('default'); // activate default shader
+
+      // drawScene ensures the draw commands run inside the active shader pass
+      r.drawScene(() => {
+        p.push();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(42);
+        p.fill(255);
+        p.text("Main Menu\nPress any key to start", 0, 0);
+        p.pop();
+      });
+    },
+
+    cleanup() {
+      console.log("🧹 Menu cleanup");
+    },
   };
 }
