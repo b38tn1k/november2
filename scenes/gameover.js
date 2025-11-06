@@ -5,16 +5,18 @@ export function loadGameOver(p) {
         init() {
             console.log("💀 Game Over Screen");
         },
+        onActionStart(action) {
+            if (action === "pause") p.shared.sceneManager.change("menu");
+        },
 
         onKeyPressed(key, keyCode) {
-            console.log(`Key pressed in Menu: ${key} (${keyCode})`);
             if (p.keyIsPressed && p.key === 'm') {
                 p.shared.sceneManager.change('menu');
             }
         },
 
         update() {
-            
+
         },
 
         draw() {
@@ -26,7 +28,7 @@ export function loadGameOver(p) {
                 p.fill(255);
                 p.textAlign(p.CENTER, p.CENTER);
                 p.textSize(42);
-                p.text("Game Over\nPress M for Menu", 0, 0);
+                p.text(`Game Over\nPress ${p.shared.controls.map.pause} for Menu`, 0, 0);
                 p.pop();
             });
         },
