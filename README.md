@@ -1,7 +1,6 @@
 # The Anemone Of My Anemone
 
-A quiet, deliberate odyssey through a world that feels alive and unfamiliar.
-You are an anemone—small, persistent, and searching. Grasp, release, and drift through the strange terrain in pursuit of the one you’ve lost.
+Play as an anemone in search of your missing beloved, using your unique ability to grasp, release, and drift through the environment to uncover the story of loss, memory, and connection.
 
 [LLM Wiki docs](https://app.komment.ai/github/b38tn1k/november2)
 
@@ -37,7 +36,10 @@ Currents are shown by environmental hints such as plankton, bioluminscent organi
 ## James Stuff
 
 - Make a cache maths mechanism 
+- Make main Canvas always act as landscape / lets you draw assuming landscape and rotates on final render. 
 
 ## Inspo
 
 - https://youtube.com/shorts/QV18JZGVV4Y?si=reocyPAGcm7iPJfR
+- I think could use spider web approach I made [demo](http://b38tn1k.github.io/awickedweb/) [code](https://github.com/b38tn1k/b38tn1k.github.io/tree/master/awickedweb) to animate 'tethered' components in current. Physics.js should provide some toolkits.
+- [Not our work, but great proof of concept](https://openprocessing.org/sketch/207474)
