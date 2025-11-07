@@ -1,12 +1,15 @@
 // core/sceneManager.js
+import { BaseScene } from './BaseScene.js';
+
 export function createSceneManager(p) {
   const manager = {
     scenes: {},
     current: null,
     Debug: p.shared.Debug,
 
-    register(name, scene) {
-      this.scenes[name] = scene;
+    register(name, SceneClass) {
+      // Instantiate the scene class with p
+      this.scenes[name] = new SceneClass(p);
     },
 
     change(name) {

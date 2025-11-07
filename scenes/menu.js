@@ -1,57 +1,60 @@
-export function loadMenu(p) {
-    return {
-        Debug: p.shared.Debug,
+import { BaseScene } from '../core/BaseScene.js';
 
-        init() {
-            this.Debug.log('level', "📜 Menu initialized");
-            p.shared.ui.hide();
-            const r = p.shared.renderer;
-            const player = p.shared.player;
-            player.deactivate();
-            r.reset();
-            r.deferShader('background', 'default');
-            r.deferShader('world', 'default');
-            r.setNoShader('entities');
-            r.deferShader('ui', 'default');
-        },
+export class MenuScene extends BaseScene {
+    constructor(p) {
+        super(p);
+    }
 
-        onKeyPressed(key, keyCode) {
-            this.Debug.log('level', `Key pressed in Menu: ${key} (${keyCode})`);
-            p.shared.sceneManager.change('level1');
-        },
+    init() {
+        super.init();
+        this.Debug.log('level', "📜 Menu initialized");
+        this.p.shared.ui.hide();
+        const r = this.renderer;
+        const player = this.p.shared.player;
+        player.deactivate();
+        r.reset();
+        r.deferShader('background', 'default');
+        r.deferShader('world', 'default');
+        r.setNoShader('entities');
+        r.deferShader('ui', 'default');
+    }
 
-        update() {
-            const r = p.shared.renderer;
-            // Menu rarely changes, but mark UI dirty for blinking text or animation
-            r.markDirty('ui');
-            r.markDirty('background');
-        },
+    onKeyPressed(key, keyCode) {
+        this.Debug.log('level', `Key pressed in Menu: ${key} (${keyCode})`);
+        this.p.shared.sceneManager.change('level1');
+    }
 
-        draw() {
-            const r = p.shared.renderer;
-            r.use('default');
+    update() {
+        const r = this.renderer;
+        // Menu rarely changes, but mark UI dirty for blinking text or animation
+        r.markDirty('ui');
+        r.markDirty('background');
+    }
 
-            r.drawScene(({ background, ui }) => {
-                // Background layer
-                if (r.layerDirty.background) {
-                    background.background(0, 0, 80);
-                }
+    draw() {
+        const r = this.renderer;
+        r.use('default');
 
-                // UI layer (text)
-                if (r.layerDirty.ui) {
-                    ui.push();
-                    ui.textAlign(p.CENTER, p.CENTER);
-                    ui.textSize(42);
-                    ui.fill(255);
-                    ui.text("Main Menu\nPress any key to start", 0, 0);
-                    ui.pop();
-                }
-            });
-        },
+        r.drawScene(({ background, ui }) => {
+            // Background layer
+            if (r.layerDirty.background) {
+                background.background(0, 0, 80);
+            }
 
-        cleanup() {
-            this.Debug.log('level', "🧹 Menu cleanup");
-            p.shared.ui.show();
-        },
-    };
+            // UI layer (text)
+            if (r.layerDirty.ui) {
+                ui.push();
+                ui.textAlign(this.p.CENTER, this.p.CENTER);
+                ui.textSize(42);
+                ui.fill(255);
+                ui.text("Main Menu\nPress any key to start", 0, 0);
+                ui.pop();
+            }
+        });
+    }
+
+    cleanup() {
+        this.Debug.log('level', "🧹 Menu cleanup");
+        this.p.shared.ui.show();
+    }
 }

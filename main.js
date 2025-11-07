@@ -4,13 +4,16 @@ import { registerControls } from './core/controls.js';
 import { registerSystemEvents } from './core/system.js';
 import { createSceneManager } from './core/sceneManager.js';
 import { createGameState } from './core/state.js';
-import { loadMenu } from './scenes/menu.js';
-import { loadLevel1 } from './scenes/level1.js';
-import { loadGameOver } from './scenes/gameover.js';
-import { createPlayer } from './entities/player.js';
 import { Debug } from './core/debug.js';
-import {createUI} from './core/ui.js';
-import {Settings} from './config/settings.js';
+import { createUI } from './core/ui.js';
+import { Settings } from './config/settings.js';
+
+import { MenuScene } from './scenes/menu.js';
+import { Level1Scene } from './scenes/level1.js';
+import { GameOverScene } from './scenes/gameover.js';
+
+import { createPlayer } from './entities/player.js';
+
 
 export const mainSketch = (p) => {
   p.shared = {};
@@ -29,8 +32,8 @@ export const mainSketch = (p) => {
     p.textFont(p.shared.mainFont);
     p.textAlign(p.CENTER, p.CENTER);
     p.textSize(42);
-    
-    
+
+
     p.shared.Debug = Debug;
     p.shared.state = createGameState();
     p.shared.renderer = await createRenderer(p);
@@ -41,13 +44,11 @@ export const mainSketch = (p) => {
     p.shared.timing = createTiming(p);
     registerSystemEvents(p);
     registerControls(p);
-    
-    // Register scenes
-    p.shared.sceneManager.register('menu', loadMenu(p));
-    p.shared.sceneManager.register('level1', loadLevel1(p));
-    p.shared.sceneManager.register('gameover', loadGameOver(p));
 
-    // Start with menu
+    // Register scenes
+    p.shared.sceneManager.register('menu', MenuScene);
+    p.shared.sceneManager.register('level1', Level1Scene);
+    p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
     p.shared.sceneManager.change('menu');
   };
 

@@ -8,10 +8,8 @@ function systemEventWindowResized(p) {
     const h = window.innerHeight;
     p.resizeCanvas(w, h);
     p.shared.viewport = { width: w, height: h };
+    p.shared.renderer.resize(w, h);
     console.log(`Window resized to ${w}x${h}`);
-    //How to notify subscribers
-    // p.shared.ui?.onResize?.(w, h);
-    // p.shared.menu?.onResize?.(w, h);
   }, 150);
 }
 
