@@ -9,7 +9,8 @@ Play as an anemone in search of your missing beloved, using your unique ability 
 You just need to serve the files somehow:
 
 ```
-python3 -m http.server
+npm install -g http-server
+http-server -c-1
 ```
 
 ## Questions for Alex
