@@ -8,13 +8,13 @@ export async function registerControls(p) {
   // Load key mapping from JSON
   const response = await fetch('./config/controls.json');
   const keyMap = await response.json();
-  p.shared.controls = { map: keyMap, state: {} };
+  p.shared.controls = { map: keyMap, state: {}, lastPressed: {} };
 
   const delay = 25;
 
-  function debounceControl(eventName, fn) {
-    clearTimeout(p.shared.debounce.controls[eventName]);
-    p.shared.debounce.controls[eventName] = setTimeout(fn, delay);
+  function debounceControl(keyId, fn) {
+    clearTimeout(p.shared.debounce.controls[keyId]);
+    p.shared.debounce.controls[keyId] = setTimeout(fn, delay);
   }
 
   function routeEvent(p, eventName, key, keyCode) {
@@ -81,17 +81,32 @@ export async function registerControls(p) {
     routeEvent(p, 'onTouchEnded', p.mouseX, p.mouseY);
   });
 
-  p.keyPressed = () => debounceControl('keyPressed', () => {
-    Debug.log('controls', `Key pressed: ${p.key} (${p.keyCode})`);
-    routeEvent(p, 'onKeyPressed', p.key, p.keyCode);
-    setKeyState(p.key, true);
-  });
+  // Improved key handling to fix stuck key issue with simultaneous key presses
+  p.keyPressed = () => {
+    const key = p.key;
+    const keyCode = p.keyCode;
+    Debug.log('controls', `Key pressed: ${key} (${keyCode})`);
+    setKeyState(key, true);
+    routeEvent(p, 'onKeyPressed', key, keyCode);
+    // record last press time
+    p.shared.controls.lastPressed[key] = performance.now();
+  };
 
-  p.keyReleased = () => debounceControl('keyReleased', () => {
-    Debug.log('controls', `Key released: ${p.key} (${p.keyCode})`);
-    routeEvent(p, 'onKeyReleased', p.key, p.keyCode);
-    setKeyState(p.key, false);
-  });
+  p.keyReleased = () => {
+    const key = p.key;
+    const keyCode = p.keyCode;
+    const releaseTime = performance.now();
+    const debounceKey = `keyReleased_${key}`;
+
+    debounceControl(debounceKey, () => {
+      // Ignore stale release if key was re-pressed since this release event
+      if (releaseTime < (p.shared.controls.lastPressed[key] || 0)) return;
+
+      Debug.log('controls', `Key released: ${key} (${keyCode})`);
+      setKeyState(key, false);
+      routeEvent(p, 'onKeyReleased', key, keyCode);
+    });
+  };
   // allow querying if a mapped control is active
   p.shared.controls.isActive = (action) => !!p.shared.controls.state[action];
 }
