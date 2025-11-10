@@ -1,27 +1,30 @@
 {
-    "moveUp": [
-        "ArrowUp",
-        "w"
-    ],
-    "moveDown": [
-        "ArrowDown",
-        "s"
-    ],
-    "moveLeft": [
-        "ArrowLeft",
-        "a"
-    ],
-    "moveRight": [
-        "ArrowRight",
-        "d"
-    ],
-    "jump": [
-        " "
-    ],
-    "action": [
-        "Enter"
-    ],
-    "pause": [
-        "Escape"
-    ]
+    "debounceTime": 15,
+    "keyMap": {
+        "moveUp": [
+            "ArrowUp",
+            "w"
+        ],
+        "moveDown": [
+            "ArrowDown",
+            "s"
+        ],
+        "moveLeft": [
+            "ArrowLeft",
+            "a"
+        ],
+        "moveRight": [
+            "ArrowRight",
+            "d"
+        ],
+        "jump": [
+            " "
+        ],
+        "action": [
+            "Enter"
+        ],
+        "pause": [
+            "Escape"
+        ]
+    }
 }

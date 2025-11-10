@@ -29,10 +29,9 @@ export async function createRenderer(p) {
     shader_components: {},
     activeShader: null,
     layerDirty: {},
-
+    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer'],
     _pendingShaders: {},
     _shaderCache: new Map(),
-
     frameCount: 0,
     frameThreshold: 1,
     Debug: p.shared.Debug,
@@ -73,7 +72,7 @@ export async function createRenderer(p) {
         this.shaders[name] = p.createShader(vert, frag);
         this.Debug.log('renderer', `🎨 Loaded shader: ${name}`);
       } catch (err) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Shader load failed (${name}), using built-in defaults`, err);
+        this.Debug.log('renderer', '[WARN]', `⚠️ Shader load failed (${name}), using buiLayerlt-in defaults`, err);
         this.shaders[name] = p.createShader(vsDefault, fsDefault);
       }
     },
@@ -113,9 +112,9 @@ export async function createRenderer(p) {
     },
 
     async init() {
-      // Create all major rendering layers
-      ['background', 'world', 'entities', 'ui'].forEach(layerName => {
-        this.layers[layerName] = p.createGraphics(p.width, p.height, p.WEBGL);
+      // Create all major drawing layers (no shader layers)
+      this.layerNames.forEach(layerName => {
+        this.layers[layerName] = p.createGraphics(p.width, p.height);
         this.layerDirty[layerName] = true;
         this.layers[layerName].textFont(p.shared.mainFont);
         this.layers[layerName].textAlign(p.CENTER, p.CENTER);
@@ -166,11 +165,16 @@ export async function createRenderer(p) {
       if (!shader) return;
 
       try {
-        layer.shader(shader);
-        layer.activeShader = shader;
-        layer.noShader = false;
-        delete this._pendingShaders[layerName];
-        this.Debug.log('renderer', `🎨 Applied deferred shader "${shaderName}" to layer "${layerName}"`);
+        if (layer._renderer?.GL) {
+          layer.shader(shader);
+          layer.activeShader = shader;
+          layer.noShader = false;
+          delete this._pendingShaders[layerName];
+          this.Debug.log('renderer', `🎨 Applied deferred shader "${shaderName}" to layer "${layerName}"`);
+        } else {
+          // Non-WebGL layer, cannot apply shader
+          this.Debug.log('renderer', '[WARN]', `⚠️ Cannot apply shader "${shaderName}" to non-WebGL layer "${layerName}".`);
+        }
       } catch (err) {
         this.Debug.log('renderer', '[WARN]', `💥 Deferred shader still failed for "${layerName}" — will retry next frame`, err);
       }
@@ -193,7 +197,7 @@ export async function createRenderer(p) {
     markDirty(layerName) {
       if (!this.layers[layerName]) {
         this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer dirty: "${layerName}". Creating a new layer.`);
-        this.layers[layerName] = p.createGraphics(p.width, p.height, p.WEBGL);
+        this.layers[layerName] = p.createGraphics(p.width, p.height);
       }
       this.layerDirty[layerName] = true;
     },
@@ -201,7 +205,7 @@ export async function createRenderer(p) {
     markClean(layerName) {
       if (!this.layers[layerName]) {
         this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer clean: "${layerName}". Creating a new layer.`);
-        this.layers[layerName] = p.createGraphics(p.width, p.height, p.WEBGL);
+        this.layers[layerName] = p.createGraphics(p.width, p.height);
       }
       this.layerDirty[layerName] = false;
     },
@@ -210,18 +214,19 @@ export async function createRenderer(p) {
       this.frameCount++;
       this.updateUniforms(p);
 
-      // Pass layers to scene draw function
-      const { background, world, entities, ui } = this.layers;
-
       for (const [name, layer] of Object.entries(this.layers)) {
         if (this.layerDirty[name]) {
           layer.clear();
           layer.noStroke();
-          layer.drawingContext.disable(layer.drawingContext.DEPTH_TEST);
+          this.Debug.log('renderer', `🖌️ Redrawing layer: "${name}"`);
+          if (layer._renderer?.GL) {
+            layer.drawingContext.disable(layer.drawingContext.DEPTH_TEST);
+          }
         }
 
         // Only apply deferred shaders after a few frames have passed since reset
         if (this._pendingShaders[name] && this.frameCount > this.frameThreshold) {
+          this.Debug.log('renderer', `Applying Shader: "${name}"`);
           const shaderName = this._pendingShaders[name];
           const shader = this.shaders[shaderName];
           if (shader && layer._renderer?.GL) {
@@ -231,19 +236,21 @@ export async function createRenderer(p) {
       }
 
       // Let scene draw into layers
-      drawFn(this.layers);
+      drawFn();
 
       // Mark all layers clean after draw
       for (const name in this.layerDirty) {
         this.layerDirty[name] = false;
       }
 
+      this.Debug.log('renderer', `Compositing layers onto main canvas at frame ${this.frameCount} - ${p.frameCount}`);
       // Composite onto main canvas
       p.resetShader();
-      p.image(background, -p.width / 2, -p.height / 2);
-      p.image(world, -p.width / 2, -p.height / 2);
-      p.image(entities, -p.width / 2, -p.height / 2);
-      p.image(ui, -p.width / 2, -p.height / 2);
+      p.clear();
+      p.image(this.layers.backgroundLayer, -p.width / 2, -p.height / 2);
+      p.image(this.layers.worldLayer, -p.width / 2, -p.height / 2);
+      p.image(this.layers.entitiesLayer, -p.width / 2, -p.height / 2);
+      p.image(this.layers.uiLayer, -p.width / 2, -p.height / 2);
 
       // Check renderer readiness
       if (!this.ready && Object.keys(this._pendingShaders).length === 0) {
@@ -256,6 +263,7 @@ export async function createRenderer(p) {
       Object.entries(this.layers).forEach(([name, layer]) => {
         layer.resizeCanvas(w, h);
         this.layerDirty[name] = true; // mark dirty after resize
+        this.Debug.log('renderer', `🔄 Resized layer "${name}" to (${w}, ${h})`);
       });
     },
 
@@ -263,7 +271,9 @@ export async function createRenderer(p) {
       for (const [name, layer] of Object.entries(this.layers)) {
         layer.clear();
         layer.noStroke();
-        layer.drawingContext.disable(layer.drawingContext.DEPTH_TEST);
+        if (layer._renderer?.GL) {
+          layer.drawingContext.disable(layer.drawingContext.DEPTH_TEST);
+        }
         this.layerDirty[name] = true; // mark everything dirty for next draw
       }
       this.activeShader = this.shaders.default;

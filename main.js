@@ -7,6 +7,7 @@ import { createGameState } from './core/state.js';
 import { Debug } from './core/debug.js';
 import { createUI } from './core/ui.js';
 import { Settings } from './config/settings.js';
+import { parseLevel } from '../core/parseLevel.js';
 
 import { MenuScene } from './scenes/menu.js';
 import { Level1Scene } from './scenes/level1.js';
@@ -35,6 +36,7 @@ export const mainSketch = (p) => {
 
 
     p.shared.Debug = Debug;
+    p.shared.parseLevel = parseLevel;
     p.shared.state = createGameState();
     p.shared.renderer = await createRenderer(p);
     p.shared.sceneManager = createSceneManager(p);
@@ -61,11 +63,7 @@ export const mainSketch = (p) => {
     while (p.shared.timing.shouldStep()) {
       sceneManager.update();
     }
-
-    p.background(0);
-    renderer.drawScene(() => {
-      sceneManager.draw(p.shared.timing.getAlpha());
-    });
+    sceneManager.draw(p.shared.timing.getAlpha());
   };
 
 };

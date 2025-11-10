@@ -5,8 +5,8 @@ export const Debug = {
   // Optional subsystem toggles
   flags: {
     controls: false,
-    renderer: true,
-    system: false,
+    renderer: false,
+    system: true,
     player: false,
     level: true,
   },

@@ -13,10 +13,6 @@ export class MenuScene extends BaseScene {
         const player = this.p.shared.player;
         player.deactivate();
         r.reset();
-        r.deferShader('background', 'default');
-        r.deferShader('world', 'default');
-        r.setNoShader('entities');
-        r.deferShader('ui', 'default');
     }
 
     onKeyPressed(key, keyCode) {
@@ -27,28 +23,27 @@ export class MenuScene extends BaseScene {
     update() {
         const r = this.renderer;
         // Menu rarely changes, but mark UI dirty for blinking text or animation
-        r.markDirty('ui');
-        r.markDirty('background');
+        r.markDirty('uiLayer');
+        r.markDirty('backgroundLayer');
     }
 
     draw() {
         const r = this.renderer;
+        const layers = r.layers;
         r.use('default');
 
-        r.drawScene(({ background, ui }) => {
+        r.drawScene(() => {
             // Background layer
-            if (r.layerDirty.background) {
-                background.background(0, 0, 80);
+            if (r.layerDirty.backgroundLayer) {
+                layers.backgroundLayer.background(0, 0, 80);
             }
 
             // UI layer (text)
-            if (r.layerDirty.ui) {
-                ui.push();
-                ui.textAlign(this.p.CENTER, this.p.CENTER);
-                ui.textSize(42);
-                ui.fill(255);
-                ui.text("Main Menu\nPress any key to start", 0, 0);
-                ui.pop();
+            if (r.layerDirty.uiLayer) {
+                layers.uiLayer.textAlign(this.p.CENTER, this.p.CENTER);
+                layers.uiLayer.textSize(42);
+                layers.uiLayer.fill(255);
+                layers.uiLayer.text("Main Menu\nPress any key to start", layers.uiLayer.width / 2, layers.uiLayer.height / 2);
             }
         });
     }

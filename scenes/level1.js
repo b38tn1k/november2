@@ -9,18 +9,17 @@ export class Level1Scene extends BaseScene {
     init() {
         super.init();
         this.Debug.log('level', "🎮 Level 1 started");
-        const levels = this.p.shared.levels;
-        const spawn = levels.level1.spawn || { x: 0, y: 0 };
+        const level = this.p.shared.levels.level1;
+        Object.assign(this, this.p.shared.parseLevel(level, this.p));
+        console.log(this);
+
+        // const this.spawn = levels.level1.this.spawn || { x: 0, y: 0 };
         const player = this.p.shared.player;
-        this.Debug.log('level', `Level 1 spawn point at (${spawn.x}, ${spawn.y})`);
-        player.reset({ x: spawn.x, y: spawn.y });
+        this.Debug.log('level', `Level 1 this.spawn point at (${this.spawn.x}, ${this.spawn.y})`);
+        player.reset({ x: this.spawn.x, y: this.spawn.y });
 
         const r = this.p.shared.renderer;
         r.reset();
-        r.deferShader('background', 'default');
-        r.deferShader('world', 'default');
-        r.setNoShader('entities');
-        r.deferShader('ui', 'default');
     }
 
     onActionStart(action) {
@@ -41,27 +40,23 @@ export class Level1Scene extends BaseScene {
     }
 
     update() {
-        const r = this.p.shared.renderer;
-        const player = this.p.shared.player;
-        const dt = this.p.shared.timing.delta;
-        if (player?.visible) player.update(dt);
-        r.markDirty('entities');
-        r.markDirty('ui');
+        const [r, player, dt] = super.update();
+        r.markDirty('uiLayer');
+        r.markDirty('backgroundLayer');
+        r.markDirty('entitiesLayer');
     }
 
     draw() {
         const r = this.p.shared.renderer;
         const ui = this.p.shared.ui;
         const player = this.p.shared.player;
+        const layers = r.layers;
 
         r.use('default');
-
-        r.drawScene(({ background, world, entities, ui: uiLayer }) => {
-            background.background(50, 0, 200);
-            if (player?.visible) {
-                player.draw(entities);
-            }
-            ui.draw(uiLayer);
+        r.drawScene(() => {
+            this.drawBlockingBackground(layers.backgroundLayer, this.tiles);
+            player.draw(layers.entitiesLayer);
+            ui.draw(layers.uiLayer);
         });
     }
 

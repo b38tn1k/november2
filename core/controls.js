@@ -7,10 +7,11 @@ export async function registerControls(p) {
   if (!p.shared.debounce.controls) p.shared.debounce.controls = {};
   // Load key mapping from JSON
   const response = await fetch('./config/controls.json');
-  const keyMap = await response.json();
+  const res = await response.json();
+  const keyMap = res.keyMap || res;
   p.shared.controls = { map: keyMap, state: {}, lastPressed: {} };
 
-  const delay = 25;
+  const delay = res.debounceTime || 50;
 
   function debounceControl(keyId, fn) {
     clearTimeout(p.shared.debounce.controls[keyId]);
@@ -81,7 +82,6 @@ export async function registerControls(p) {
     routeEvent(p, 'onTouchEnded', p.mouseX, p.mouseY);
   });
 
-  // Improved key handling to fix stuck key issue with simultaneous key presses
   p.keyPressed = () => {
     const key = p.key;
     const keyCode = p.keyCode;
@@ -99,7 +99,6 @@ export async function registerControls(p) {
     const debounceKey = `keyReleased_${key}`;
 
     debounceControl(debounceKey, () => {
-      // Ignore stale release if key was re-pressed since this release event
       if (releaseTime < (p.shared.controls.lastPressed[key] || 0)) return;
 
       Debug.log('controls', `Key released: ${key} (${keyCode})`);

@@ -5,15 +5,15 @@ export class BaseScene {
     this.Debug = p.shared.Debug;
     this.renderer = p.shared.renderer;
   }
-
-  // ---- Lifecycle ------------------------------------------------------------
-
   init() {
     this.Debug.log('level', `📜 ${this.constructor.name} initialized`);
   }
-
   update() {
-    // default noop
+    const r = this.p.shared.renderer;
+    const player = this.p.shared.player;
+    const dt = this.p.shared.timing.delta;
+    if (player?.visible) player.update(dt);
+    return [r, player, dt];
   }
 
   draw() {
@@ -29,8 +29,13 @@ export class BaseScene {
   markDirty(...layers) {
     const r = this.renderer;
     if (!r || !r.layerDirty) return;
-    layers.forEach(name => {
-      if (r.layerDirty[name] !== undefined) r.layerDirty[name] = true;
+
+    const flat = layers.flat();
+    flat.forEach(name => {
+      if (r.layerDirty[name] !== undefined) {
+        r.layerDirty[name] = true;
+        this.Debug.log('renderer', `🟠 Marked dirty: ${name}`);
+      }
     });
   }
 
@@ -39,6 +44,27 @@ export class BaseScene {
     if (!r || !r.layerDirty) return;
     layers.forEach(name => {
       if (r.layerDirty[name] !== undefined) r.layerDirty[name] = false;
+    });
+  }
+
+
+  drawBlockingBackground(layer, tiles, tileSize = 32) {
+    if (!layer) {
+      this.Debug.log('level', '⚠️ drawBlockingBackground: No layer provided');
+      return;
+    }
+    if (!tiles || !Array.isArray(tiles)) {
+      this.Debug.log('level', '⚠️ drawBlockingBackground: Invalid or missing tiles array');
+      return;
+    }
+    layer.clear();
+    layer.noStroke();
+    const p = this.p;
+    layer.fill(100, 120, 150); // muted blueish gray color
+    tiles.forEach(tile => {
+      if (tile && typeof tile.x === 'number' && typeof tile.y === 'number') {
+        layer.rect(tile.x, tile.y, tileSize, tileSize);
+      }
     });
   }
 

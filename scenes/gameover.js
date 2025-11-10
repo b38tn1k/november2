@@ -9,11 +9,6 @@ export class GameOverScene extends BaseScene {
         const player = this.p.shared.player;
         player.deactivate();
         r.reset();
-        r.deferShader('background', 'default');
-        r.deferShader('world', 'default');
-        r.setNoShader('entities');
-        r.setNoShader('ui');
-        // r.deferShader('ui', 'default');
     }
 
     onActionStart(action) {
@@ -28,27 +23,26 @@ export class GameOverScene extends BaseScene {
 
     update() {
         const r = this.p.shared.renderer;
-        r.markDirty('ui');
-        r.markDirty('background');
+        r.markDirty('uiLayer');
+        r.markDirty('backgroundLayer');
     }
 
     draw() {
         const r = this.p.shared.renderer;
         r.use('default');
 
-        r.drawScene(({ background, ui }) => {
+        r.drawScene((layers) => {
+            const { backgroundLayer, worldLayer, entitiesLayer, uiLayer } = layers;
             // Background layer
-            if (r.layerDirty.background) {
-                background.background(80, 0, 0);
+            if (r.layerDirty.backgroundLayer) {
+                backgroundLayer.background(80, 0, 0);
             }
             // UI layer (text)
-            if (r.layerDirty.ui) {
-                ui.push();
-                ui.textAlign(this.p.CENTER, this.p.CENTER);
-                ui.textSize(42);
-                ui.fill(255);
-                ui.text(`Game Over\nPress ${this.p.shared.controls.map.pause} for Menu`, 0, 0);
-                ui.pop();
+            if (r.layerDirty.uiLayer) {
+                uiLayer.textAlign(this.p.CENTER, this.p.CENTER);
+                uiLayer.textSize(42);
+                uiLayer.fill(255);
+                uiLayer.text(`Game Over\nPress ${this.p.shared.controls.map.pause} for Menu`, uiLayer.width/2, uiLayer.height/2);
             }
         });
     }

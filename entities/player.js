@@ -3,14 +3,14 @@ export function createPlayer(p) {
         x: 0,
         y: 0,
         speed: 250,
-        size: 100,
+        size: 32,
         visible: false,
         movingLeft: false,
         movingRight: false,
         Debug: p.shared.Debug,
+        health: 100,
 
         onActionStart(action) {
-
             if (action === "moveLeft") this.movingLeft = true;
             if (action === "moveLeft") this.Debug.log('player', `Player: move left started`);
             if (action === "moveRight") this.movingRight = true;
@@ -31,7 +31,7 @@ export function createPlayer(p) {
         draw(p) {
             if (!this.visible) return;
             p.fill(0, 200, 200);
-            p.circle(this.x, this.y, this.size);
+            p.square(this.x, this.y, this.size);
         },
 
         reset(spawn = { x: 0, y: 0 }) {
