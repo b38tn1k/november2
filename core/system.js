@@ -82,8 +82,8 @@ export function registerSystemEvents(p) {
 }
 
 export function setupCanvasWithAdaptation(p) {
-  let w = p.max(window.innerWidth, window.innerHeight);
-  let h = p.min(window.innerWidth, window.innerHeight);
+  let w = window.innerWidth;
+  let h = window.innerHeight;
 
   if (window.innerHeight > window.innerWidth) {
     p.shared.isPortrait = true;
