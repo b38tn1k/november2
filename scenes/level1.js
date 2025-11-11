@@ -41,7 +41,7 @@ export class Level1Scene extends BaseScene {
     update() {
         const [r, player, dt] = super.update();
         r.markDirty('uiLayer');
-        r.markDirty('backgroundLayer');
+        r.markDirty('worldLayer');
         r.markDirty('entitiesLayer');
     }
 
@@ -53,7 +53,7 @@ export class Level1Scene extends BaseScene {
 
         r.use('nes');
         r.drawScene(() => {
-            this.drawBlockingBackground(layers.backgroundLayer, this.tiles);
+            this.drawBlockingBackground(layers.worldLayer, this.tiles);
             // this.drawRainbowBar(layers.worldLayer);
             player.draw(layers.entitiesLayer);
             ui.draw(layers.uiLayer);
