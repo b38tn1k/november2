@@ -30,7 +30,7 @@ export class MenuScene extends BaseScene {
     draw() {
         const r = this.renderer;
         const layers = r.layers;
-        r.use('default');
+        r.use('nes');
 
         r.drawScene(() => {
             // Background layer
@@ -40,8 +40,6 @@ export class MenuScene extends BaseScene {
 
             // UI layer (text)
             if (r.layerDirty.uiLayer) {
-                layers.uiLayer.textAlign(this.p.CENTER, this.p.CENTER);
-                layers.uiLayer.textSize(42);
                 layers.uiLayer.fill(255);
                 layers.uiLayer.text("Main Menu\nPress any key to start", layers.uiLayer.width / 2, layers.uiLayer.height / 2);
             }

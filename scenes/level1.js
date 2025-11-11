@@ -11,7 +11,6 @@ export class Level1Scene extends BaseScene {
         this.Debug.log('level', "🎮 Level 1 started");
         const level = this.p.shared.levels.level1;
         Object.assign(this, this.p.shared.parseLevel(level, this.p));
-        console.log(this);
 
         // const this.spawn = levels.level1.this.spawn || { x: 0, y: 0 };
         const player = this.p.shared.player;
@@ -52,9 +51,10 @@ export class Level1Scene extends BaseScene {
         const player = this.p.shared.player;
         const layers = r.layers;
 
-        r.use('default');
+        r.use('nes');
         r.drawScene(() => {
             this.drawBlockingBackground(layers.backgroundLayer, this.tiles);
+            // this.drawRainbowBar(layers.worldLayer);
             player.draw(layers.entitiesLayer);
             ui.draw(layers.uiLayer);
         });

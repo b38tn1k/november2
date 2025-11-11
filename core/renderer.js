@@ -1,25 +1,32 @@
 // Fallbacks for default shaders
 const vsDefault = `
+#ifdef GL_ES
   precision mediump float;
-  attribute vec3 aPosition;
-  attribute vec2 aTexCoord;
-  varying vec2 vTexCoord;
-  void main() {
-    vTexCoord = aTexCoord;
-    gl_Position = vec4(aPosition, 1.0);
-  }
+#endif
+
+attribute vec4 aPosition;
+attribute vec2 aTexCoord;
+
+varying vec2 vTexCoord;
+
+void main() {
+  vTexCoord = aTexCoord;
+  gl_Position = aPosition;
+}
 `;
 
 const fsDefault = `
+#ifdef GL_ES
   precision mediump float;
-  varying vec2 vTexCoord;
-  uniform sampler2D tex0;
-  uniform vec2 uResolution;
-  uniform vec2 uMouse;
-  uniform float uTime;
-  void main() {
-    gl_FragColor = texture2D(tex0, vTexCoord);
-  }
+#endif
+
+uniform sampler2D tex0;
+varying vec2 vTexCoord;
+
+void main() {
+  vec2 uv = vec2(vTexCoord.x, 1.0 - vTexCoord.y);
+  gl_FragColor = texture2D(tex0, uv);
+}
 `;
 
 export async function createRenderer(p) {
@@ -28,6 +35,7 @@ export async function createRenderer(p) {
     shaders: {},
     shader_components: {},
     activeShader: null,
+    activePostShader: 'default',
     layerDirty: {},
     layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer'],
     _pendingShaders: {},
@@ -35,32 +43,7 @@ export async function createRenderer(p) {
     frameCount: 0,
     frameThreshold: 1,
     Debug: p.shared.Debug,
-
-    deferShader(layerName, shaderName = 'default') {
-      this._pendingShaders[layerName] = shaderName;
-      this.layerDirty[layerName] = true;
-      this.Debug.log('renderer', `🕒 Deferred shader "${shaderName}" for layer "${layerName}"`);
-    },
-
-    setNoShader(layerName) {
-      const layer = this.layers[layerName];
-      if (!layer) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Tried to remove shader from unknown layer: "${layerName}".`);
-        return;
-      }
-      if (typeof layer.resetShader === 'function') {
-        layer.resetShader();
-      }
-      if ('activeShader' in layer) {
-        delete layer.activeShader;
-      }
-      if (this._pendingShaders[layerName]) {
-        delete this._pendingShaders[layerName];
-      }
-      layer.noShader = true;
-      this.layerDirty[layerName] = true;
-      this.Debug.log('renderer', `🗑️ Removed shader from layer "${layerName}"`);
-    },
+    base: null,
 
     async loadShader(name, vertPath, fragPath) {
       try {
@@ -113,85 +96,50 @@ export async function createRenderer(p) {
 
     async init() {
       // Create all major drawing layers (no shader layers)
+      this.base = p.createGraphics(p.width, p.height, p.WEBGL);
+      this.base.noStroke();
       this.layerNames.forEach(layerName => {
-        this.layers[layerName] = p.createGraphics(p.width, p.height);
+        this.layers[layerName] = p.createGraphics(p.width / p.shared.settings.graphicsScaling, p.height / p.shared.settings.graphicsScaling);
         this.layerDirty[layerName] = true;
         this.layers[layerName].textFont(p.shared.mainFont);
         this.layers[layerName].textAlign(p.CENTER, p.CENTER);
-        this.layers[layerName].textSize(42);
+        this.layers[layerName].textSize(this.layers[layerName].width / 40);
       });
 
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
-    },
-
-    updateUniforms(p) {
-      const t = p.millis() / 1000.0;
-      const res = [p.width, p.height];
-      const mouse = [p.mouseX, p.mouseY];
-
-      if (this.activeShader && !this.activeShader.noShader) {
-        try {
-          this.activeShader.setUniform('uTime', t);
-          this.activeShader.setUniform('uResolution', res);
-          this.activeShader.setUniform('uMouse', mouse);
-        } catch (err) {
-          // Ignore errors for shaders that don't define these uniforms
-        }
-      }
-
-      for (const [layerName, layer] of Object.entries(this.layers)) {
-        if (layer.noShader) continue;
-        if (layer.activeShader) {
-          try {
-            layer.activeShader.setUniform('uTime', t);
-            layer.activeShader.setUniform('uResolution', res);
-            layer.activeShader.setUniform('uMouse', mouse);
-          } catch (err) {
-            // Ignore errors for shaders that don't define these uniforms
-          }
-        }
-      }
-    },
-
-    createAndApplyShader(layerName, shaderName = 'default') {
-      const layer = this.layers[layerName];
-      if (!layer) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Layer "${layerName}" not found for shader application.`);
-        return;
-      }
-      if (layer.noShader) return;
-
-      const shader = this.getOrCreateShader(shaderName, layer);
-      if (!shader) return;
-
-      try {
-        if (layer._renderer?.GL) {
-          layer.shader(shader);
-          layer.activeShader = shader;
-          layer.noShader = false;
-          delete this._pendingShaders[layerName];
-          this.Debug.log('renderer', `🎨 Applied deferred shader "${shaderName}" to layer "${layerName}"`);
-        } else {
-          // Non-WebGL layer, cannot apply shader
-          this.Debug.log('renderer', '[WARN]', `⚠️ Cannot apply shader "${shaderName}" to non-WebGL layer "${layerName}".`);
-        }
-      } catch (err) {
-        this.Debug.log('renderer', '[WARN]', `💥 Deferred shader still failed for "${layerName}" — will retry next frame`, err);
-      }
+      await this.loadShader('nes', './shaders/nes.vert', './shaders/nes.frag');
     },
 
     use(shaderName = 'default') {
+      this.activePostShader = shaderName;
+    },
+
+    applyPostShader(shaderName = 'default') {
       const shader = this.shaders[shaderName];
-      if (shader) {
-        this.activeShader = shader;
-        p.shader(shader);
-        this.updateUniforms(p);
-      } else {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Shader "${shaderName}" not found; reverting to default`);
-        this.activeShader = this.shaders.default;
-        p.shader(this.activeShader);
-        this.updateUniforms(p);
+      if (!shader) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Post shader "${shaderName}" not found.`);
+        return;
       }
+      p.shader(shader);
+      try {
+        shader.setUniform('tex0', this.base);
+        shader.setUniform('uResolution', [p.width, p.height]);
+        shader.setUniform('uTime', p.millis() / 1000.0);
+
+      } catch (err) {
+        console.error('Error setting shader uniforms:', err);
+        // Ignore errors if uniforms don't exist
+      }
+      
+
+      p.push();
+      p.translate(-p.width / 2, -p.height / 2);
+      p.rectMode(p.CORNER);
+      p.rect(0, 0, p.width, p.height);
+      p.pop();
+      p.resetShader();
+
+
     },
 
     markDirty(layerName) {
@@ -212,7 +160,7 @@ export async function createRenderer(p) {
 
     drawScene(drawFn) {
       this.frameCount++;
-      this.updateUniforms(p);
+      // this.updateUniforms(p);
 
       for (const [name, layer] of Object.entries(this.layers)) {
         if (this.layerDirty[name]) {
@@ -245,12 +193,16 @@ export async function createRenderer(p) {
 
       this.Debug.log('renderer', `Compositing layers onto main canvas at frame ${this.frameCount} - ${p.frameCount}`);
       // Composite onto main canvas
-      p.resetShader();
+
+      this.base.clear();
       p.clear();
-      p.image(this.layers.backgroundLayer, -p.width / 2, -p.height / 2);
-      p.image(this.layers.worldLayer, -p.width / 2, -p.height / 2);
-      p.image(this.layers.entitiesLayer, -p.width / 2, -p.height / 2);
-      p.image(this.layers.uiLayer, -p.width / 2, -p.height / 2);
+      const scaleFactor = p.shared.settings.graphicsScaling;
+      this.base.image(this.layers.backgroundLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+      this.base.image(this.layers.worldLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+      this.base.image(this.layers.entitiesLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+      this.base.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+
+      this.applyPostShader(this.activePostShader);
 
       // Check renderer readiness
       if (!this.ready && Object.keys(this._pendingShaders).length === 0) {
@@ -260,10 +212,14 @@ export async function createRenderer(p) {
     },
 
     resize(w, h) {
+      this.base.resizeCanvas(w, h);
+      const scaling =  p.shared.settings.graphicsScaling
       Object.entries(this.layers).forEach(([name, layer]) => {
-        layer.resizeCanvas(w, h);
+        layer.resizeCanvas(w/scaling, h/scaling);
+
+        
         this.layerDirty[name] = true; // mark dirty after resize
-        this.Debug.log('renderer', `🔄 Resized layer "${name}" to (${w}, ${h})`);
+        this.Debug.log('renderer', `🔄 Resized layer "${name}" to (${w/scaling}, ${h/scaling})`);
       });
     },
 
@@ -277,28 +233,10 @@ export async function createRenderer(p) {
         this.layerDirty[name] = true; // mark everything dirty for next draw
       }
       this.activeShader = this.shaders.default;
-      this.updateUniforms(p);
+      // this.updateUniforms(p);
       this.frameCount = 0;
       this.Debug.log('renderer', '🔄 Renderer reset, frame counter cleared');
     },
-
-    disposeShaders() {
-      if (!p._renderer || !p._renderer.GL) {
-        this.Debug.log('renderer', '[WARN]', '⚠️ WebGL context not available, cannot dispose shaders.');
-        return;
-      }
-      const gl = p._renderer.GL;
-      for (const shader of this._shaderCache.values()) {
-        if (shader._glShaderProgram) {
-          gl.deleteProgram(shader._glShaderProgram);
-        } else if (shader._pInst && shader._pInst._gl && shader._pInst._gl.deleteProgram) {
-          // fallback for p5 shaders if needed
-          gl.deleteProgram(shader._pInst._gl);
-        }
-      }
-      this._shaderCache.clear();
-      this.Debug.log('renderer', '🧹 Disposed all cached shaders and cleared cache.');
-    }
   };
 
   await renderer.init();

@@ -1,7 +1,7 @@
 import { createTiming } from './core/timing.js';
 import { createRenderer } from './core/renderer.js';
 import { registerControls } from './core/controls.js';
-import { registerSystemEvents } from './core/system.js';
+import { registerSystemEvents, setupCanvasWithAdaptation } from './core/system.js';
 import { createSceneManager } from './core/sceneManager.js';
 import { createGameState } from './core/state.js';
 import { Debug } from './core/debug.js';
@@ -26,13 +26,14 @@ export const mainSketch = (p) => {
   };
 
   p.setup = async () => {
-    p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL);
+    setupCanvasWithAdaptation(p);
+    
     p.shared.settings = Settings
     p.pixelDensity(p.shared.settings.pixelDensity);
     p.frameRate(p.shared.settings.fps);
     p.textFont(p.shared.mainFont);
     p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(42);
+    p.textSize(p.width / 30);
 
 
     p.shared.Debug = Debug;

@@ -29,20 +29,18 @@ export class GameOverScene extends BaseScene {
 
     draw() {
         const r = this.p.shared.renderer;
-        r.use('default');
+        const layers = r.layers;
+        r.use('nes');
 
-        r.drawScene((layers) => {
-            const { backgroundLayer, worldLayer, entitiesLayer, uiLayer } = layers;
+        r.drawScene(() => {
             // Background layer
             if (r.layerDirty.backgroundLayer) {
-                backgroundLayer.background(80, 0, 0);
+                layers.backgroundLayer.background(80, 0, 0);
             }
             // UI layer (text)
             if (r.layerDirty.uiLayer) {
-                uiLayer.textAlign(this.p.CENTER, this.p.CENTER);
-                uiLayer.textSize(42);
-                uiLayer.fill(255);
-                uiLayer.text(`Game Over\nPress ${this.p.shared.controls.map.pause} for Menu`, uiLayer.width/2, uiLayer.height/2);
+                layers.uiLayer.fill(255);
+                layers.uiLayer.text(`Game Over\nPress ${this.p.shared.controls.map.pause} for Menu`, layers.uiLayer.width/2, layers.uiLayer.height/2);
             }
         });
     }

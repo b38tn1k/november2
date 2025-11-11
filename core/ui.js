@@ -10,7 +10,7 @@ export function createUI(p) {
 
       layer.fill(255);
       layer.textAlign(p.LEFT, p.TOP);
-      layer.textSize(18);
+      layer.textSize(layer.width / 80);
 
       // Example: show FPS + player info
       const fps = p.frameRate().toFixed(0);
@@ -18,8 +18,6 @@ export function createUI(p) {
       const hp = player ? player.health : '-';
 
       //WEBGL canvas mode has (0,0) in center
-      // layer.text(`FPS: ${fps}`, 10 - p.width/2, 10 - p.height/2);
-      // layer.text(`HP: ${hp}`, 10 - p.width/2, 30 - p.height/2);
       layer.text(`FPS: ${fps}`, 10, 10);
       layer.text(`HP: ${hp}`, 10, 30);
     }
