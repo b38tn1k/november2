@@ -7,11 +7,30 @@ export class BaseScene {
     this.recentlyLaunchedScene = true;
     this.recentlyChangedScene = true;
     this.lastSceneChangeFrameNumber = 0;
+    this.entities = [];
+    this.tileLookup = null;
+    this.restitution = 20; // this could be fun for bouncy physics
   }
+
   init() {
     this.Debug.log('level', `📜 ${this.constructor.name} initialized`);
     this.sceneFrameCount = 0;
+    const player = this.p.shared.player;
+    if (this.levelData) {
+      this.computeMapTransform(this.levelData);
+      player.setScene(this);
+      player.reset(this.levelData.spawn);
+      this.tileLookup = new Map();
+      for (const t of this.levelData.tiles) {
+        const key = `${t.x},${t.y}`;
+        this.tileLookup.set(key, t);
+      }
+    }
+    const r = this.p.shared.renderer;
+    r.reset();
+    return [r, player];
   }
+
   update() {
     const r = this.p.shared.renderer;
     const player = this.p.shared.player;
@@ -20,7 +39,94 @@ export class BaseScene {
     this.sceneFrameCount++;
     this.recentlyLaunchedScene = this.sceneFrameCount < 5;
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
+
+    for (const e of this.entities) e.update(dt);
+    this.checkCollisions();
     return [r, player, dt];
+  }
+
+  registerEntity(entity) {
+    this.entities.push(entity);
+    entity.setScene(this);
+  }
+
+  getTile(x, y) {
+    if (!this.tileLookup) return null;
+    const tile = this.tileLookup.get(`${x},${y}`);
+    if (!tile) return null;
+
+    // Tag anything with type === 'wall' as solid
+    return {
+      ...tile,
+      solid: tile.type === 'wall'
+    };
+  }
+
+  checkCollisions() {
+    for (const e of this.entities) {
+      if (!e.visible || !e.mainPhysicsParticle) continue;
+      this.resolveTileCollisions(e.mainPhysicsParticle);
+      // later: this.resolveEntityCollisions(e);
+    }
+  }
+
+  resolveTileCollisions(particle) {
+    const r = particle.worldUnitRadius;
+    const { x, y } = particle.pos;
+
+    // Look up tile indices near the particle
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+
+    // Check 4 neighboring tiles for solidity
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const tile = this.getTile(tx + dx, ty + dy);
+        if (tile && tile.solid) {
+          this.resolveParticleTileOverlap(particle, tx + dx, ty + dy, r);
+        }
+      }
+    }
+  }
+
+  resolveParticleTileOverlap(particle, tileX, tileY, radius) {
+    const tileCenterX = tileX + 0.5;
+    const tileCenterY = tileY + 0.5;
+    const halfSize = 0.5; // assuming tiles are 1×1 world units
+
+    // Simple AABB overlap test
+    const dx = particle.pos.x - tileCenterX;
+    const px = (halfSize + radius) - Math.abs(dx);
+    if (px <= 0) return; // no overlap
+
+    const dy = particle.pos.y - tileCenterY;
+    const py = (halfSize + radius) - Math.abs(dy);
+    if (py <= 0) return; // no overlap
+
+    // Smallest overlap wins
+    if (px < py) {
+      // particle.pos.x += dx < 0 ? -px : px;
+      // particle.vel.x = 0;
+
+      const push = dx < 0 ? -px : px;
+      particle.pos.x += push;
+      // particle.vel.x = -particle.vel.x * this.restitution;
+
+      const sign = dx < 0 ? -1 : 1;
+      particle.addForce(sign * px * this.restitution, 0);
+
+
+    } else {
+      // particle.pos.y += dy < 0 ? -py : py;
+      // particle.vel.y = 0;
+
+      const push = dy < 0 ? -py : py;
+      particle.pos.y += push;
+      // particle.vel.y = -particle.vel.y * this.restitution;
+
+      const sign = dy < 0 ? -1 : 1;
+      particle.addForce(0, sign * py * this.restitution);
+    }
   }
 
   draw() {
@@ -31,28 +137,7 @@ export class BaseScene {
     this.Debug.log('level', `🧹 ${this.constructor.name} cleanup`);
   }
 
-  // ---- Convenience ----------------------------------------------------------
-
-  markDirty(...layers) {
-    const r = this.renderer;
-    if (!r || !r.layerDirty) return;
-
-    const flat = layers.flat();
-    flat.forEach(name => {
-      if (r.layerDirty[name] !== undefined) {
-        r.layerDirty[name] = true;
-        this.Debug.log('renderer', `🟠 Marked dirty: ${name}`);
-      }
-    });
-  }
-
-  markClean(...layers) {
-    const r = this.renderer;
-    if (!r || !r.layerDirty) return;
-    layers.forEach(name => {
-      if (r.layerDirty[name] !== undefined) r.layerDirty[name] = false;
-    });
-  }
+  // ---- Drawing Tools ----------------------------------------------------------
 
   drawBlockingBackgroundTransformed(layer, tiles) {
     if (!layer || !this.mapTransform) {
@@ -93,26 +178,27 @@ export class BaseScene {
     if (typeof layer.colorMode === 'function') layer.colorMode(layer.RGB, 255, 255, 255);
   }
 
-  // ---- Common setup helpers -------------------------------------------------
+  // ---- Helpers -------------------------------------------------
 
-  setupDefaultShaders() {
+  markDirty(...layers) {
     const r = this.renderer;
-    if (!r) return;
-    r.reset();
-    r.deferShader('background', 'default');
-    r.deferShader('world', 'default');
-    r.setNoShader('entities');
-    r.deferShader('ui', 'default');
+    if (!r || !r.layerDirty) return;
+
+    const flat = layers.flat();
+    flat.forEach(name => {
+      if (r.layerDirty[name] !== undefined) {
+        r.layerDirty[name] = true;
+        this.Debug.log('renderer', `🟠 Marked dirty: ${name}`);
+      }
+    });
   }
 
-  resetPlayerToLevel(levelName = 'level1') {
-    const levels = this.p.shared.levels;
-    const spawn = levels?.[levelName]?.spawn || { x: 0, y: 0 };
-    const player = this.p.shared.player;
-    if (player) {
-      player.reset(spawn);
-      this.Debug.log('level', `📍 Player reset to (${spawn.x}, ${spawn.y})`);
-    }
+  markClean(...layers) {
+    const r = this.renderer;
+    if (!r || !r.layerDirty) return;
+    layers.forEach(name => {
+      if (r.layerDirty[name] !== undefined) r.layerDirty[name] = false;
+    });
   }
 
   deactivatePlayer() {
@@ -123,6 +209,18 @@ export class BaseScene {
   onResize(w, h) {
     this.Debug.log('level', `🔄 Scene onResize called: ${w}x${h}`);
     this.lastSceneChangeFrameNumber = this.sceneFrameCount;
+    if (this.levelData) this.computeMapTransform(this.levelData);
+  }
+
+  onActionStart(action) {
+    const player = this.p.shared.player;
+    player?.onActionStart?.(action);
+    if (action === "pause") this.p.shared.sceneManager.change("menu");
+  }
+
+  onActionEnd(action) {
+    const player = this.p.shared.player;
+    player?.onActionEnd?.(action);
   }
 
   computeMapTransform(levelData, opts = {}) {
@@ -186,7 +284,7 @@ export class BaseScene {
     const { originPx, tileSizePx, scale } = this.mapTransform;
     // invert worldToScreen to return logical grid coordinates
     return {
-      x: (pt.x  - originPx.x) / tileSizePx,
+      x: (pt.x - originPx.x) / tileSizePx,
       y: (pt.y - originPx.y) / tileSizePx
     };
   }

@@ -7,41 +7,12 @@ export class Level1Scene extends BaseScene {
     }
 
     init() {
-        super.init();
-        this.Debug.log('level', "🎮 Level 1 started");
         const level = this.p.shared.levels.level1;
         this.levelData = this.p.shared.parseLevel(level, this.p);
-        this.computeMapTransform(this.levelData);
-
-        // const this.spawn = levels.level1.this.spawn || { x: 0, y: 0 };
-        const player = this.p.shared.player;
-        this.Debug.log('level', `Level 1 this.spawn point at (${this.levelData.spawn.x}, ${this.levelData.spawn.y})`);
-        // const spawnPx = this.worldToScreen(this.levelData.spawn);
-        // this.Debug.log('level', `Level 1 this.spawn point at (${spawnPx.x}, ${spawnPx.y})`);
-        // console.log("Spawning player at:", spawnPx);
-        player.setScene(this);
-        player.reset(this.levelData.spawn);
-
-        const r = this.p.shared.renderer;
-        r.reset();
-    }
-
-    onResize(w, h) {
-        super.onResize(w, h);
-        this.Debug.log('level', `🔄 Level 1 onResize called: ${w}x${h}`);
-        this.computeMapTransform(this.levelData);
-
-    }
-
-    onActionStart(action) {
-        const player = this.p.shared.player;
-        player?.onActionStart?.(action);
-        if (action === "pause") this.p.shared.sceneManager.change("menu");
-    }
-
-    onActionEnd(action) {
-        const player = this.p.shared.player;
-        player?.onActionEnd?.(action);
+        const [r, player] = super.init();
+        this.Debug.log('level', "🎮 Level 1 started");
+        this.registerEntity(player);
+        
     }
 
     onKeyPressed(key, keyCode) {

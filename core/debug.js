@@ -7,7 +7,7 @@ export const Debug = {
     controls: false,
     renderer: false,
     system: true,
-    player: true,
+    player: false,
     level: true,
   },
 

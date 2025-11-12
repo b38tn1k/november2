@@ -1,3 +1,5 @@
+import { PhysicsParticle } from '../core/physics.js';
+
 export class BaseEntity {
   constructor(p) {
     this.p = p;
@@ -6,6 +8,13 @@ export class BaseEntity {
     this.visible = false;
     this.size = 1; // in world units (tiles)
     this.Debug = p.shared.Debug;
+    this.mainPhysicsParticle = null;
+    this.physicsParticles = [];
+  }
+
+  createPhysicsParticle(x, y, mass = 1, fixed = false) {
+    const physicsParticle = new PhysicsParticle(x, y, mass, fixed);
+    return physicsParticle;
   }
 
   setScene(scene) {
@@ -17,10 +26,27 @@ export class BaseEntity {
     this.worldPos.y = spawn.y;
     this.visible = true;
     this.Debug?.log('entity', `Entity reset to world (${spawn.x}, ${spawn.y})`);
+    for (const particle of this.physicsParticles) {
+      particle.pos.x = spawn.x;
+      particle.pos.y = spawn.y;
+      particle.vel.x = 0;
+      particle.vel.y = 0;
+      if (!particle.main) {
+        particle.pos.x += particle.offsets.x;
+        particle.pos.y += particle.offsets.y;
+      }
+    }
   }
 
   update(dt) {
-    // Default: do nothing — override in subclass
+    for (const particle of this.physicsParticles) {
+      particle.integrate(dt);
+    }
+
+    if (this.mainPhysicsParticle) {
+      this.worldPos.x = this.mainPhysicsParticle.pos.x;
+      this.worldPos.y = this.mainPhysicsParticle.pos.y;
+    }
   }
 
   draw(layer) {
