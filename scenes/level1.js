@@ -37,7 +37,7 @@ export class Level1Scene extends BaseScene {
         const player = this.p.shared.player;
         const layers = r.layers;
 
-        r.use('nes');
+        r.use('default');
         r.drawScene(() => {
             if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
                 // this.drawBlockingBackground(layers.worldLayer, this.tiles);

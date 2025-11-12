@@ -107,7 +107,8 @@ export async function createRenderer(p) {
       });
 
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
-      await this.loadShader('nes', './shaders/nes.vert', './shaders/nes.frag');
+      // await this.loadShader('nes', './shaders/nes.vert', './shaders/nes.frag');
+      await this.loadShader('monet', './shaders/monet.vert', './shaders/monet.frag');
     },
 
     use(shaderName = 'default') {

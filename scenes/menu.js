@@ -30,10 +30,11 @@ export class MenuScene extends BaseScene {
     draw() {
         const r = this.renderer;
         const layers = r.layers;
-        r.use('nes');
+        r.use('default');
 
         r.drawScene(() => {
             // Background layer
+            this.drawRainbowBar(layers.worldLayer);
             if (r.layerDirty.backgroundLayer) {
                 layers.backgroundLayer.background(0, 0, 80);
             }

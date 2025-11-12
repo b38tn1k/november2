@@ -23,12 +23,12 @@ export class BaseEntity {
 
   reset(spawn = { x: 0, y: 0 }) {
     this.worldPos.x = spawn.x;
-    this.worldPos.y = spawn.y;
+    this.worldPos.y = spawn.y + this.size / 2;
     this.visible = true;
     this.Debug?.log('entity', `Entity reset to world (${spawn.x}, ${spawn.y})`);
     for (const particle of this.physicsParticles) {
-      particle.pos.x = spawn.x;
-      particle.pos.y = spawn.y;
+      particle.pos.x = spawn.x + particle.offsets.x;
+      particle.pos.y = spawn.y + particle.offsets.y;
       particle.vel.x = 0;
       particle.vel.y = 0;
       if (!particle.main) {
@@ -39,9 +39,10 @@ export class BaseEntity {
   }
 
   update(dt) {
-    for (const particle of this.physicsParticles) {
-      particle.integrate(dt);
-    }
+    if (!this.visible) return;
+
+    this.physicsParticles[0].integrate(dt);
+    this.physicsParticles[0].clearContacts();
 
     if (this.mainPhysicsParticle) {
       this.worldPos.x = this.mainPhysicsParticle.pos.x;

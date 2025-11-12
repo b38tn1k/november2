@@ -9,7 +9,7 @@ export class BaseScene {
     this.lastSceneChangeFrameNumber = 0;
     this.entities = [];
     this.tileLookup = null;
-    this.restitution = 20; // this could be fun for bouncy physics
+    this.restitution = 2; // this could be fun for bouncy physics
   }
 
   init() {
@@ -32,10 +32,11 @@ export class BaseScene {
   }
 
   update() {
+    console.log("scene update");
     const r = this.p.shared.renderer;
     const player = this.p.shared.player;
     const dt = this.p.shared.timing.delta;
-    if (player?.visible) player.update(dt);
+    // if (player?.visible) player.update(dt); // handled in entities list now 
     this.sceneFrameCount++;
     this.recentlyLaunchedScene = this.sceneFrameCount < 5;
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
@@ -64,8 +65,11 @@ export class BaseScene {
 
   checkCollisions() {
     for (const e of this.entities) {
-      if (!e.visible || !e.mainPhysicsParticle) continue;
-      this.resolveTileCollisions(e.mainPhysicsParticle);
+      for (const particle of e.physicsParticles) {
+        this.resolveTileCollisions(particle);
+      }
+      // if (!e.visible || !e.mainPhysicsParticle) continue;
+      // this.resolveTileCollisions(e.mainPhysicsParticle);
       // later: this.resolveEntityCollisions(e);
     }
   }
@@ -114,7 +118,7 @@ export class BaseScene {
 
       const sign = dx < 0 ? -1 : 1;
       particle.addForce(sign * px * this.restitution, 0);
-
+      particle.contactAxes.x = true; 
 
     } else {
       // particle.pos.y += dy < 0 ? -py : py;
@@ -126,6 +130,7 @@ export class BaseScene {
 
       const sign = dy < 0 ? -1 : 1;
       particle.addForce(0, sign * py * this.restitution);
+      particle.contactAxes.y = true;
     }
   }
 
@@ -173,7 +178,7 @@ export class BaseScene {
     for (let x = 0; x < width; x++) {
       const hue = (x / width) * 360;
       layer.fill(hue, 100, 100);
-      layer.rect(x, 0, 1, height);
+      layer.rect(x, 100, 1, height);
     }
     if (typeof layer.colorMode === 'function') layer.colorMode(layer.RGB, 255, 255, 255);
   }

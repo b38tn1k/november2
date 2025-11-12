@@ -30,7 +30,7 @@ export class GameOverScene extends BaseScene {
     draw() {
         const r = this.p.shared.renderer;
         const layers = r.layers;
-        r.use('nes');
+        r.use('default');
 
         r.drawScene(() => {
             // Background layer

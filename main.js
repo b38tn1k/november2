@@ -63,6 +63,7 @@ export const mainSketch = (p) => {
 
   p.draw = () => {
     p.shared.timing.update();
+    console.log(p.frameCount);
 
     const { renderer, sceneManager } = p.shared;
     if (!renderer || !sceneManager) return;
