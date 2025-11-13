@@ -9,11 +9,16 @@ export class BaseEntity {
     this.size = 1; // in world units (tiles)
     this.Debug = p.shared.Debug;
     this.mainPhysicsParticle = null;
-    this.physicsParticles = [];
+    this.physicsParticles = []; // kept only for rendering order; solver walks child graph
+    this.baseBuoyancy = 0;      // default buoyancy for floating entities
   }
 
-  createPhysicsParticle(x, y, mass = 1, fixed = false) {
-    const physicsParticle = new PhysicsParticle(x, y, mass, fixed);
+  createPhysicsParticle(x, y, mass = 1, main = false, fixed = false) {
+    const physicsParticle = new PhysicsParticle(x, y, mass, main, fixed);
+    if (main) {
+      this.mainPhysicsParticle = physicsParticle;
+    }
+    this.physicsParticles.push(physicsParticle);
     return physicsParticle;
   }
 
@@ -21,36 +26,52 @@ export class BaseEntity {
     this.scene = scene;
   }
 
+  applyForces(dt) {
+    // default global buoyancy support
+    if (!this.mainPhysicsParticle) return;
+    if (this.baseBuoyancy !== 0) {
+      const mp = this.mainPhysicsParticle;
+      mp.addForce(0, this.baseBuoyancy);
+      for (const child of mp.children) {
+        child.addForce(0, this.baseBuoyancy * 0.5);
+      }
+    }
+  }
+
   reset(spawn = { x: 0, y: 0 }) {
     this.worldPos.x = spawn.x;
-    this.worldPos.y = spawn.y + this.size / 2;
+    this.worldPos.y = spawn.y;
     this.visible = true;
     this.Debug?.log('entity', `Entity reset to world (${spawn.x}, ${spawn.y})`);
-    for (const particle of this.physicsParticles) {
-      particle.pos.x = spawn.x + particle.offsets.x;
-      particle.pos.y = spawn.y + particle.offsets.y;
-      particle.vel.x = 0;
-      particle.vel.y = 0;
-      if (!particle.main) {
-        particle.pos.x += particle.offsets.x;
-        particle.pos.y += particle.offsets.y;
-      }
+
+    if (!this.mainPhysicsParticle) return;
+
+    // place root at spawn
+    this.mainPhysicsParticle.pos.x = spawn.x;
+    this.mainPhysicsParticle.pos.y = spawn.y;
+    this.mainPhysicsParticle.vel.x = 0;
+    this.mainPhysicsParticle.vel.y = 0;
+
+    const stack = [...this.mainPhysicsParticle.children];
+    while (stack.length > 0) {
+      const c = stack.pop();
+      c.vel.x = 0;
+      c.vel.y = 0;
+      c.pos.x = this.mainPhysicsParticle.pos.x + c.offsets.x;
+      c.pos.y = this.mainPhysicsParticle.pos.y + c.offsets.y;
+      stack.push(...c.children);
     }
   }
 
   update(dt) {
     if (!this.visible) return;
-    for (const p of this.physicsParticles) p.clearContacts();
-    for (const p of this.physicsParticles) p.integrateWithoutChildren(dt);
+    // Entities no longer perform physics here.
+  }
 
-
-    // this.physicsParticles[0].integrate(dt);
-    // this.physicsParticles[0].clearContacts();
-
-    // if (this.mainPhysicsParticle) {
-    //   this.worldPos.x = this.mainPhysicsParticle.pos.x;
-    //   this.worldPos.y = this.mainPhysicsParticle.pos.y;
-    // }
+  postPhysics() {
+    if (!this.mainPhysicsParticle) return;
+    this.worldPos.x = this.mainPhysicsParticle.pos.x;
+    this.worldPos.y = this.mainPhysicsParticle.pos.y;
   }
 
   draw(layer) {

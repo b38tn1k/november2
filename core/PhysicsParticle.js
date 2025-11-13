@@ -1,33 +1,48 @@
 export class PhysicsParticle {
     constructor(x, y, mass = 1, main = false, fixed = false) {
         this.pos = { x, y };
+        this.prevPos = { x, y };          // prepare for Verlet
         this.vel = { x: 0, y: 0 };
-        this.mass = mass;
-        this.main = main;
-        this.fixed = fixed;
-        this.offsets = { x: 0, y: 0 };
-        this.worldUnitRadius = 0;
-        this.radius = 1;
         this.force = { x: 0, y: 0 };
-        this.damping = 0.95;
+
+        this.mass = mass;
+        this.invMass = fixed ? 0 : 1 / mass;
+        this.fixed = fixed;
+        this.main = main;
+
         this.children = [];
+        this.offsets = { x: 0, y: 0 };
+        this.restLength = 0;
+
         this.springK = 0.2;
         this.springDamping = 0.85;
+
+        this.damping = 0.95;  // velocity damping
+        this.forceDamping = 0.0;
+
         this.contactAxes = { x: false, y: false };
-        this.forceDamping = 0.0; // how much force leaks through blocked axes
+
+        this.radius = 1;
+        this.worldUnitRadius = 0;
+
         this.label = 0;
     }
 
-    // --- NEW ---
+    /** -------------------------------------------------------
+     *  RESET CONTACT STATE
+     * ------------------------------------------------------*/
     clearContacts() {
         this.contactAxes.x = false;
         this.contactAxes.y = false;
     }
 
+    /** -------------------------------------------------------
+     *  FORCE ACCUMULATION
+     * ------------------------------------------------------*/
     addForce(fx, fy) {
-        if (this.fixed) return;
+        if (this.invMass === 0) return;
 
-        // Respect contact constraints — block or dampen along contact axes
+        // block/dampen along collision axes
         const damp = this.forceDamping;
         if (this.contactAxes.x) fx *= damp;
         if (this.contactAxes.y) fy *= damp;
@@ -38,116 +53,160 @@ export class PhysicsParticle {
 
     cascadeForce(fx, fy, decay = 0.5) {
         this.addForce(fx, fy);
-        for (const child of this.children) {
-            child.cascadeForce(fx * decay, fy * decay, decay);
+        for (const c of this.children) {
+            c.cascadeForce(fx * decay, fy * decay, decay);
         }
     }
 
-    integrateWithoutChildren(dt) {
-        this.integrate(dt, false);
-    }
+    /** -------------------------------------------------------
+     *  INTEGRATE POSITIONS (Euler version)
+     *  — Solver calls this (no children)
+     * ------------------------------------------------------*/
+    integrateEuler(dt) {
+        if (this.invMass === 0) {
+            this.force.x = this.force.y = 0;
+            return;
+        }
 
-    integrate(dt, withChildren = true) {
-        if (this.fixed) return;
-
-        // --- apply Newtonian integration ---
-        this.vel.x += (this.force.x / this.mass) * dt;
-        this.vel.y += (this.force.y / this.mass) * dt;
+        // velocity
+        this.vel.x += (this.force.x * this.invMass) * dt;
+        this.vel.y += (this.force.y * this.invMass) * dt;
 
         this.vel.x *= this.damping;
         this.vel.y *= this.damping;
 
+        // position
         this.pos.x += this.vel.x * dt;
         this.pos.y += this.vel.y * dt;
 
-        if (withChildren) {
-            for (const child of this.children) {
-                this.applySpringToChild(child, dt);
-                child.integrate(dt);
-            }
-        }
-
-        // Reset force after integration
+        // force reset
         this.force.x = 0;
         this.force.y = 0;
     }
 
-    applySpringToChild(child, dt) {
+    /** -------------------------------------------------------
+     *  PREP FOR VERLET
+     * ------------------------------------------------------*/
+    storePrevPosition() {
+        this.prevPos.x = this.pos.x;
+        this.prevPos.y = this.pos.y;
+    }
+
+    integrateVerlet(dt) {
+        if (this.invMass === 0) {
+            this.force.x = this.force.y = 0;
+            return;
+        }
+
+        const dt2 = dt * dt;
+
+        const nx = this.pos.x + (this.pos.x - this.prevPos.x) * this.damping + (this.force.x * this.invMass) * dt2;
+        const ny = this.pos.y + (this.pos.y - this.prevPos.y) * this.damping + (this.force.y * this.invMass) * dt2;
+
+        this.prevPos.x = this.pos.x;
+        this.prevPos.y = this.pos.y;
+
+        this.pos.x = nx;
+        this.pos.y = ny;
+
+        this.force.x = 0;
+        this.force.y = 0;
+    }
+
+    /** -------------------------------------------------------
+     *  SPRING CONSTRAINT (no recursion)
+     *  — Solver calls this for each parent/child pair
+     *  — Pure positional + velocity correction
+     * ------------------------------------------------------*/
+    solveSpring(child, dt) {
         const dx = child.pos.x - this.pos.x;
         const dy = child.pos.y - this.pos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist === 0) return;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
 
-        const rest = child.restLength || Math.hypot(child.offsets.x, child.offsets.y);
-        child.restLength = rest;
-
-        const stretch = dist - rest;
-        const k = this.springK;
-        const forceMag = -k * stretch;
+        const rest = child.restLength;
+        const diff = dist - rest;
 
         const nx = dx / dist;
         const ny = dy / dist;
 
-        // Spring + damping as before
+        // spring force (Hooke)
+        const k = this.springK;
+        const forceMag = -k * diff;
+
+        // velocity damping term
         const dvx = child.vel.x - this.vel.x;
         const dvy = child.vel.y - this.vel.y;
         const relVel = dvx * nx + dvy * ny;
+
         const c = this.springDamping;
         const dampingForce = -c * relVel;
 
-        let fx = (forceMag + dampingForce) * nx;
-        let fy = (forceMag + dampingForce) * ny;
+        const fx = (forceMag + dampingForce) * nx;
+        const fy = (forceMag + dampingForce) * ny;
 
-        // Respect contact axes
-        const damp = this.forceDamping;
-        fx = this.contactAxes.x ? fx * damp : fx;
-        fy = this.contactAxes.y ? fy * damp : fy;
-
-        child.addForce(fx, fy);
-        this.addForce(-fx, -fy);
-
-        // --- Positional correction / snapback ---
-        const targetX = this.pos.x + child.offsets.x;
-        const targetY = this.pos.y + child.offsets.y;
-        const memDX = targetX - child.pos.x;
-        const memDY = targetY - child.pos.y;
-
-        const distFromTarget = Math.sqrt(memDX * memDX + memDY * memDY);
-
-        if (distFromTarget > rest * 1.3) {
-            // Hard correction if too far (25% tolerance)
-            const snapK = 0.8; // strong tether
-            child.pos.x += memDX * snapK * dt;
-            child.pos.y += memDY * snapK * dt;
-            child.vel.x *= 0.8;
-            child.vel.y *= 0.8;
-        } else {
-            // Gentle memory tether when close
-            const memK = 0.15;
-            child.addForce(memDX * memK, memDY * memK);
-        }
+        // apply to both ends
+        this.addForce(+fx, +fy);
+        child.addForce(-fx, -fy);
     }
 
+    /** -------------------------------------------------------
+     *  MEMORY TETHER (soft positional correction)
+     * ------------------------------------------------------*/
+    solveMemory(child, dt) {
+        const targetX = this.pos.x + child.offsets.x;
+        const targetY = this.pos.y + child.offsets.y;
+
+        const dx = targetX - child.pos.x;
+        const dy = targetY - child.pos.y;
+
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.000001;
+        const rest = child.restLength;
+
+        // HARD constraint if child strays too far from its intended anchor
+        const hardLimit = 1.25;
+        if (dist > rest * hardLimit) {
+            const overshoot = dist - rest;
+            const correction = overshoot / dist;
+            const factor = correction * 0.5;
+
+            child.pos.x += dx * factor;
+            child.pos.y += dy * factor;
+            return;
+        }
+
+        // SOFT tether: gentle positional slide toward target
+        const softFactor = 0.1;
+        child.pos.x += dx * softFactor;
+        child.pos.y += dy * softFactor;
+    }
+
+    /** -------------------------------------------------------
+     *  CHILD CREATION
+     * ------------------------------------------------------*/
     createChild(offsetX, offsetY, scale = 0.5) {
-        const child = new PhysicsParticle(
+        const c = new PhysicsParticle(
             this.pos.x + offsetX,
             this.pos.y + offsetY,
             this.mass * scale
         );
 
-        child.offsets = { x: offsetX, y: offsetY };  // NOT divided
-        child.restLength = Math.hypot(offsetX, offsetY);
-        child.radius = this.radius * scale;
+        c.offsets = { x: offsetX, y: offsetY };
+        c.restLength = Math.hypot(offsetX, offsetY);
+        c.radius = this.radius * scale;
 
-        this.children.push(child);
-        return child;
+        this.children.push(c);
+        return c;
     }
 
-    updateRadii(circumference, parent_size, decay = 0.8) {
+    /** -------------------------------------------------------
+     *  UPDATE RADII VISUALS
+     * ------------------------------------------------------*/
+    updateRadii(circumference, parentSize, decay = 0.8) {
         this.radius = circumference / 2;
-        this.worldUnitRadius = this.radius * parent_size;
-        for (const child of this.children) {
-            child.updateRadii(circumference * decay, parent_size);
+        this.worldUnitRadius = this.radius * parentSize;
+
+        for (const c of this.children) {
+            c.updateRadii(circumference * decay, parentSize, decay);
         }
     }
 }

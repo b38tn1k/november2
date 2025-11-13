@@ -11,7 +11,6 @@ export class Level1Scene extends BaseScene {
         this.levelData = this.p.shared.parseLevel(level, this.p);
         const [r, player] = super.init();
         this.Debug.log('level', "🎮 Level 1 started");
-        this.registerEntity(player);
 
     }
 

@@ -1,49 +1,94 @@
 import { BaseEntity } from '../core/BaseEntity.js';
 
+const ROOT_RADIUS = 0.15;    // collision radius in tiles
+const STEM_SEG_LENGTH = 0.20;    // each stem segment
+const FROND_SPREAD = 0.32;    // horizontal fan spread
+const FROND_HEIGHT = 0.28;    // how high the fronds sit
+const SPRING_K = 2.0;           // mid stiffness, stable
+const SPRING_DAMP = 0.90;    // high damping for underwater
+const FROND_MASS = 1.0;
+const STEM_MASS = 1.5;
+const ROOT_MASS = 2.0;
+
 export class Player extends BaseEntity {
     constructor(p) {
         super(p);
-        this.speed = 3; // tiles per second
-        // this.buoyancy = -0.04;
-        // this.sinkancy = 0.1;
-        this.buoyancy = -1;
-        this.ambient_buoyancy = -0.05;
-        this.sinkancy = 3;
-        this.health = 100;
-        this.moving = { moveLeft: false, moveRight: false, moveUp: false, moveDown: false, sink: false };
-        this.size = 0.5; // in world units (tiles)
-        this.pxSize = -1;
-        this.mainPhysicsParticle = this.createPhysicsParticle(0, 0, 1, true, false);
-        this.physicsParticles.push(this.mainPhysicsParticle);
 
+        this.size = 1.0;
+
+        this.speed = 40;
+        this.sinkancy = 30;
+
+        // Global upward drift for whole anemone
+        this.baseBuoyancy = -10;
+
+        this.moving = {
+            moveLeft: false,
+            moveRight: false,
+            moveUp: false,
+            moveDown: false,
+            sink: false
+        };
+
+        // -------------------------------
+        // Root (center of tile)
+        // -------------------------------
+        this.mainPhysicsParticle = this.createPhysicsParticle(
+            0, 0,      // x,y
+            1,         // mass
+            true,      // main
+            false      // fixed
+        );
+
+        this.mainPhysicsParticle.updateRadii(ROOT_RADIUS, this.size);
+
+        const root = this.mainPhysicsParticle;
+        root.mass = ROOT_MASS;
         this.frond_particle_indexes = [];
 
-        this.mainChild = this.mainPhysicsParticle.createChild(0, -0.4, 0.3);
-        this.mainChild.springK = 0.6;
-        this.mainChild.springDamping = 0.95;
-        this.physicsParticles.push(this.mainChild);
+        // -------------------------------
+        // Stem: 2 upward segments
+        // -------------------------------
+        const stem1 = root.createChild(0, -STEM_SEG_LENGTH, STEM_SEG_LENGTH);
+        stem1.springK = SPRING_K;
+        stem1.springDamping = SPRING_DAMP;
+        stem1.mass = STEM_MASS;
 
-        // 🌿 arrange fronds along an arc with child + grandchild chains
-        const spread = 2.0;   // horizontal spacing
-        const height = 0.6;   // how tall the arc is
-        const fronds = [-spread, -spread / 2, 0, spread / 2, spread]; // five fronds
-        // const fronds = [-spread, 0, spread]; // three fronds
+        const stem2 = stem1.createChild(0, -STEM_SEG_LENGTH, STEM_SEG_LENGTH);
+        stem2.springK = SPRING_K;
+        stem2.springDamping = SPRING_DAMP;
 
-        for (let i = 0; i < fronds.length; i++) {
-            const x = fronds[i];
-            const y = -0.5 - Math.sin((i / (fronds.length - 1)) * Math.PI) * height;
-            const child = this.mainChild.createChild(x, y, 0.1);
-            child.springK = 0.4;
-            child.springDamping = 0.8;
-            this.physicsParticles.push(child);
-            this.frond_particle_indexes.push([0, 1, this.physicsParticles.length - 1]); // main, child, grandchild
+        const tip = stem2; // fronds attach here
+
+        this.physicsParticles.push(stem1, stem2);
+
+        // -------------------------------
+        // Fronds (fan shape: left, middle, right)
+        // -------------------------------
+        const frondOffsets = [
+            { x: -FROND_SPREAD, y: -FROND_HEIGHT },
+            { x: 0, y: -FROND_HEIGHT * 1.2 },
+            { x: FROND_SPREAD, y: -FROND_HEIGHT }
+        ];
+
+        for (const off of frondOffsets) {
+            const frond = tip.createChild(off.x, off.y, FROND_HEIGHT);
+            frond.springK = SPRING_K * 0.8;     // slightly softer
+            frond.springDamping = SPRING_DAMP;
+            frond.mass = FROND_MASS;
+
+            this.physicsParticles.push(frond);
+
+            this.frond_particle_indexes.push([
+                this.physicsParticles.indexOf(root),
+                this.physicsParticles.indexOf(tip),
+                this.physicsParticles.indexOf(frond)
+            ]);
         }
-        this.mainPhysicsParticle.updateRadii(1, this.size);
 
+        // Label debug
         let i = 0;
-        for (let particle of this.physicsParticles) {
-            particle.label = `player_${i++}`;
-        }
+        for (const p of this.physicsParticles) p.label = `anen_${i++}`;
     }
 
     onActionStart(action) {
@@ -56,33 +101,28 @@ export class Player extends BaseEntity {
         this.Debug?.log('player', `Ended ${action}`);
     }
 
-    update(dt) {
-        super.update(dt);
-
+    applyForces(dt) {
+        super.applyForces(dt);
         const mp = this.mainPhysicsParticle;
+        if (!mp) return;
 
-        // horizontal
-        if (this.moving.moveLeft && !this.moving.moveRight) mp.addForce(-this.speed, 0);
-        else if (this.moving.moveRight && !this.moving.moveLeft) mp.addForce(this.speed, 0);
+        // Horizontal control
+        if (this.moving.moveLeft) mp.addForce(-this.speed, 0);
+        if (this.moving.moveRight) mp.addForce(+this.speed, 0);
 
-        // vertical buoyancy / sinking
-        if (this.moving.sink) {
-            mp.addForce(0, this.sinkancy);
-        } else {
-            mp.cascadeForce(0, this.buoyancy, 0.8);
-        }
+        // Vertical control
+        if (this.moving.sink) mp.addForce(0, this.sinkancy);
+    }
 
-        for (const particle of this.physicsParticles) {
-            if (!particle.main) {
-                particle.addForce(0, this.ambient_buoyancy);
-            }
-
-        }
+    postPhysics() {
+        const mp = this.mainPhysicsParticle;
+        if (!mp) return;
 
         this.worldPos.x = mp.pos.x;
         this.worldPos.y = mp.pos.y;
         this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
     }
+
     draw(layer) {
         if (!this.visible || !this.scene) return;
         const { x, y } = this.scene.worldToScreen(this.worldPos);
@@ -92,6 +132,11 @@ export class Player extends BaseEntity {
         const pc = chroma.player;
         layer.stroke(pc[0], pc[1], pc[2], pc[3]);
         layer.strokeWeight(4);
+
+        // for (const particle of this.physicsParticles) {
+        //     const pos = this.scene.worldToScreen(particle.pos);
+        //     layer.circle(pos.x, pos.y, 5);
+        // }
 
         for (const indexes of this.frond_particle_indexes) {
             const sp = this.scene.worldToScreen(this.physicsParticles[indexes[0]].pos); // start
