@@ -16,9 +16,7 @@ export class GameOverScene extends BaseScene {
     }
 
     onKeyPressed(key, keyCode) {
-        if (this.p.keyIsPressed && this.p.key === 'm') {
-            this.p.shared.sceneManager.change('menu');
-        }
+        super.onKeyPressed(key, keyCode);
     }
 
     update() {

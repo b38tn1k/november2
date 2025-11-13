@@ -69,7 +69,7 @@ export class BaseScene {
 
     // 3. step the physics
     this.physicsSolver.step(dt, roots);
-    
+
     // 4. post-physics entity updates
     for (const entity of this.entities) {
       entity.postPhysics(dt);
@@ -93,6 +93,14 @@ export class BaseScene {
       ...tile,
       solid: tile.type === 'wall'
     };
+  }
+
+  onKeyPressed(key, keyCode) {
+    this.Debug.log('level', `Key pressed in ${this.constructor.name}: ${key} (${keyCode})`);
+    if (this.p.keyIsPressed && this.p.key === 'p') {
+      this.Debug.log('level', `Toggled physics debug: ${this.physicsWorld.debug}`);
+      this.physicsWorld.DEBUG_COLLISIONS = !this.physicsWorld.DEBUG_COLLISIONS;
+    }
   }
 
 

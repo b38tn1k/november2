@@ -16,7 +16,7 @@ export class MenuScene extends BaseScene {
     }
 
     onKeyPressed(key, keyCode) {
-        this.Debug.log('level', `Key pressed in Menu: ${key} (${keyCode})`);
+        super.onKeyPressed(key, keyCode);
         this.p.shared.sceneManager.change('level1');
     }
 

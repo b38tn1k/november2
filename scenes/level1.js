@@ -15,6 +15,7 @@ export class Level1Scene extends BaseScene {
     }
 
     onKeyPressed(key, keyCode) {
+        super.onKeyPressed(key, keyCode);
         if (this.p.keyIsPressed && this.p.key === 'l') {
             this.p.shared.sceneManager.change('gameover');
         }

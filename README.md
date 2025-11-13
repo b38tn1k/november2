@@ -36,11 +36,7 @@ http-server -c-1
 
 ## Currents
 Currents are shown by environmental hints such as plankton, bioluminscent organisms, sea week, sand, bubbles, etc moving in a direction. Currents can be linear, curved, eddy currents, or even waves that push you out of the water!
-
-## James Stuff
-
-- Make a cache maths mechanism 
-- Make main Canvas always act as landscape / lets you draw assuming landscape and rotates on final render. 
+- currents legend in layers.json should include direction, constant vs sinusoidal, perfiod, frequency, max force, etc...
 
 ## Inspo
 
