@@ -2,6 +2,7 @@
 
 Play as an anemone in search of your missing beloved, using your unique ability to grasp, release, and drift through the environment to uncover the story of loss, memory, and connection.
 
+[Progress Blog](https://b38tn1k.github.io/code/fun/game/november/2025/11/01/novembergamehack/#darkmode)
 [LLM Wiki docs](https://app.komment.ai/github/b38tn1k/november2)
 
 ## Running Locally

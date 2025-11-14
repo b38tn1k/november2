@@ -1,3 +1,9 @@
+// ideas for alex:
+// - we could do like a ping pong shader effect between two framebuffers for some effects, this would allow effects over groups of layers
+// - I have some ideas how to do multi-color effects with regions, for like coral layers etc.. could be dont with additional textures or maybe even in shader code
+// - I think a edge detection style thing, in the final post process, might be cool to give a bit of a drawn feel, is also just an interesting thing to implement and I think you would appreciate the elegance of how edge detection can work
+
+
 // Fallbacks for default shaders
 const vsDefault = `
 #ifdef GL_ES
@@ -45,55 +51,6 @@ export async function createRenderer(p) {
     Debug: p.shared.Debug,
     base: null,
 
-    async loadShader(name, vertPath, fragPath) {
-      try {
-        const [vert, frag] = await Promise.all([
-          fetch(vertPath).then(res => (res.ok ? res.text() : vsDefault)),
-          fetch(fragPath).then(res => (res.ok ? res.text() : fsDefault)),
-        ]);
-        this.shader_components[name] = { "vert": vert, "frag": frag };
-        this.shaders[name] = p.createShader(vert, frag);
-        this.Debug.log('renderer', `🎨 Loaded shader: ${name}`);
-      } catch (err) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Shader load failed (${name}), using buiLayerlt-in defaults`, err);
-        this.shaders[name] = p.createShader(vsDefault, fsDefault);
-      }
-    },
-
-    getOrCreateShader(shaderName, layer) {
-      const shaderComp = this.shader_components[shaderName];
-      if (!shaderComp) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Shader components for "${shaderName}" not found.`);
-        return null;
-      }
-      // Obtain WebGL context from the layer
-      const gl = layer?._renderer?.GL;
-      if (!gl) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ WebGL context not found for layer; cannot create shader "${shaderName}".`);
-        return null;
-      }
-      // Assign a unique context ID if not already assigned
-      if (!gl.__context_id) {
-        gl.__context_id = Math.random().toString(36).substr(2, 9);
-      }
-      const contextId = gl.__context_id;
-      // Compose a cache key unique per shader and WebGL context
-      const cacheKey = `${shaderName}_${contextId}`;
-      if (this._shaderCache.has(cacheKey)) {
-        this.Debug.log('renderer', `♻️ Reusing cached shader "${shaderName}" for context.`);
-        return this._shaderCache.get(cacheKey);
-      }
-      try {
-        const newShader = layer.createShader(shaderComp.vert, shaderComp.frag);
-        this._shaderCache.set(cacheKey, newShader);
-        this.Debug.log('renderer', `🎨 Created and cached new shader "${shaderName}" for context.`);
-        return newShader;
-      } catch (err) {
-        this.Debug.log('renderer', '[WARN]', `💥 Failed to create shader "${shaderName}" for context`, err);
-        return null;
-      }
-    },
-
     async init() {
       // Create all major drawing layers (no shader layers)
       this.base = p.createGraphics(p.width, p.height, p.WEBGL);
@@ -118,10 +75,8 @@ export async function createRenderer(p) {
 
 
       // then there could be a final layer mastering one also - water color effect would be nice
-    },
 
-    use(shaderName = 'default') {
-      this.activePostShader = shaderName;
+      // 2d sampler canvas for voroni tile source for coral variation in color etc
     },
 
     applyPostShader(shaderName = 'default') {
@@ -160,22 +115,6 @@ export async function createRenderer(p) {
       p.pop();
 
 
-    },
-
-    markDirty(layerName) {
-      if (!this.layers[layerName]) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer dirty: "${layerName}". Creating a new layer.`);
-        this.layers[layerName] = p.createGraphics(p.width, p.height);
-      }
-      this.layerDirty[layerName] = true;
-    },
-
-    markClean(layerName) {
-      if (!this.layers[layerName]) {
-        this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer clean: "${layerName}". Creating a new layer.`);
-        this.layers[layerName] = p.createGraphics(p.width, p.height);
-      }
-      this.layerDirty[layerName] = false;
     },
 
     drawScene(drawFn) {
@@ -225,6 +164,9 @@ export async function createRenderer(p) {
       this.base.image(this.layers.worldLayer, -p.width / 2, -p.height / 2, p.width, p.height);
       this.base.image(this.layers.entitiesLayer, -p.width / 2, -p.height / 2, p.width, p.height);
       this.base.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+
+      // this was an early idea, I think need to rework for multiple shaders  the 'texture level' shaders and a final pass shader
+      // we might need to think on additional texture shaders required
       this.applyPostShader(this.activePostShader);
       p.resetShader();
 
@@ -234,6 +176,8 @@ export async function createRenderer(p) {
         this.Debug.log('renderer', '✅ Renderer fully initialized with shaders');
       }
     },
+
+    //// END OF FUN STUFF ////
 
     resize(w, h) {
       this.base.resizeCanvas(w, h);
@@ -261,6 +205,76 @@ export async function createRenderer(p) {
       this.frameCount = 0;
       this.Debug.log('renderer', '🔄 Renderer reset, frame counter cleared');
     },
+
+    use(shaderName = 'default') {
+      this.activePostShader = shaderName;
+    },
+
+    markDirty(layerName) {
+      if (!this.layers[layerName]) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer dirty: "${layerName}". Creating a new layer.`);
+        this.layers[layerName] = p.createGraphics(p.width, p.height);
+      }
+      this.layerDirty[layerName] = true;
+    },
+
+    markClean(layerName) {
+      if (!this.layers[layerName]) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Tried to mark unknown layer clean: "${layerName}". Creating a new layer.`);
+        this.layers[layerName] = p.createGraphics(p.width, p.height);
+      }
+      this.layerDirty[layerName] = false;
+    },
+
+    async loadShader(name, vertPath, fragPath) {
+      try {
+        const [vert, frag] = await Promise.all([
+          fetch(vertPath).then(res => (res.ok ? res.text() : vsDefault)),
+          fetch(fragPath).then(res => (res.ok ? res.text() : fsDefault)),
+        ]);
+        this.shader_components[name] = { "vert": vert, "frag": frag };
+        this.shaders[name] = p.createShader(vert, frag);
+        this.Debug.log('renderer', `🎨 Loaded shader: ${name}`);
+      } catch (err) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Shader load failed (${name}), using buiLayerlt-in defaults`, err);
+        this.shaders[name] = p.createShader(vsDefault, fsDefault);
+      }
+    },
+
+    getOrCreateShader(shaderName, layer) {
+      const shaderComp = this.shader_components[shaderName];
+      if (!shaderComp) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Shader components for "${shaderName}" not found.`);
+        return null;
+      }
+      // Obtain WebGL context from the layer
+      const gl = layer?._renderer?.GL;
+      if (!gl) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ WebGL context not found for layer; cannot create shader "${shaderName}".`);
+        return null;
+      }
+      // Assign a unique context ID if not already assigned
+      if (!gl.__context_id) {
+        gl.__context_id = Math.random().toString(36).substr(2, 9);
+      }
+      const contextId = gl.__context_id;
+      // Compose a cache key unique per shader and WebGL context
+      const cacheKey = `${shaderName}_${contextId}`;
+      if (this._shaderCache.has(cacheKey)) {
+        this.Debug.log('renderer', `♻️ Reusing cached shader "${shaderName}" for context.`);
+        return this._shaderCache.get(cacheKey);
+      }
+      try {
+        const newShader = layer.createShader(shaderComp.vert, shaderComp.frag);
+        this._shaderCache.set(cacheKey, newShader);
+        this.Debug.log('renderer', `🎨 Created and cached new shader "${shaderName}" for context.`);
+        return newShader;
+      } catch (err) {
+        this.Debug.log('renderer', '[WARN]', `💥 Failed to create shader "${shaderName}" for context`, err);
+        return null;
+      }
+    }
+
   };
 
   await renderer.init();
