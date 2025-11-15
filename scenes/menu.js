@@ -34,13 +34,11 @@ export class MenuScene extends BaseScene {
 
         r.drawScene(() => {
             // Background layer
-            this.drawRainbowBar(layers.worldLayer);
+            this.Debug.drawRainbowBar(layers.worldLayer);
 
             // UI layer (text)
             if (r.layerDirty.uiLayer) {
-                const chroma = this.p.shared.chroma;
-                const pc = chroma.ui;
-                layers.uiLayer.fill(pc[0], pc[1], pc[2], pc[3]);
+                layers.uiLayer.fill(255);
                 layers.uiLayer.textAlign(this.p.CENTER, this.p.CENTER);
                 layers.uiLayer.textSize(layers.uiLayer.width / 60);
                 layers.uiLayer.text("Main Menu\nPress any key to start", layers.uiLayer.width / 2, layers.uiLayer.height / 2);

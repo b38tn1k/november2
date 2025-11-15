@@ -36,22 +36,20 @@ export class Level1Scene extends BaseScene {
         const ui = this.p.shared.ui;
         const player = this.p.shared.player;
         const layers = r.layers;
-
         r.use('chroma');
         r.drawScene(() => {
             if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
-                // this.drawBlockingBackground(layers.worldLayer, this.tiles);
-                // this.drawBlockingBackgroundTransformed(layers.worldLayer, this.levelData.tiles);
+                this.drawTerrainBlocking(layers.worldLayer);
 
-                this.drawOrganicBlockingBackground(layers.worldLayer, this.levelData.tiles, {
+                this.drawTerrainOrganic(layers.worldLayer, {
                     noiseScale: 3.5,
                     noiseAmp: 0.4,
                     cornerSmooth: 0.45
                 });
-                this.drawCurrents(layers.worldLayer);
+
+                this.drawCurrentsLayer(layers.worldLayer);
             }
 
-            // this.drawRainbowBar(layers.worldLayer);
             player.draw(layers.entitiesLayer);
             ui.draw(layers.uiLayer);
         });

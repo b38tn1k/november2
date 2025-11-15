@@ -18,8 +18,8 @@ export class Player extends BaseEntity {
 
         this.speed = 40;
         this.speed = p.shared.settings.playerSpeed || 40;
-        this.sinkancy = p.shared.settings.sinkancy || 30;
-        this.baseBuoyancy = p.shared.settings.buoyancy || -10;
+        this.sinkancy = p.shared.settings.playerSinkancy || 30;
+        this.baseBuoyancy = p.shared.settings.playerBuoyancy || -10;
 
         this.moving = {
             moveLeft: false,
@@ -127,9 +127,9 @@ export class Player extends BaseEntity {
         const { x, y } = this.scene.worldToScreen(this.worldPos);
 
         layer.noFill();
-        const chroma = this.p.shared.chroma;
-        const pc = chroma.player;
-        layer.stroke(pc[0], pc[1], pc[2], pc[3]);
+        // const chroma = this.p.shared.chroma;
+        // const pc = chroma.player;
+        layer.stroke(this.p.shared.chroma.player);
         layer.strokeWeight(4);
 
         for (const indexes of this.frond_particle_indexes) {

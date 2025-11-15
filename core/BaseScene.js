@@ -1,5 +1,7 @@
 import { PhysicsWorld } from './PhysicsWorld.js';
 import { PhysicsSolver } from './PhysicsSolver.js';
+import { GeometryTools } from './GeometryTools.js';
+import * as DrawTools from './staticDrawingTools.js';
 
 export class BaseScene {
   constructor(p) {
@@ -167,256 +169,6 @@ export class BaseScene {
     this.Debug.log('level', `🧹 ${this.constructor.name} cleanup`);
   }
 
-  // ---- Drawing Tools ----------------------------------------------------------
-
-  // --------------------------------------------------------------
-  // Identify contiguous wall regions (4-way connectivity)
-  // --------------------------------------------------------------
-  extractTileRegions(tiles) {
-    const grid = new Map();
-    for (const t of tiles) {
-      grid.set(`${t.x},${t.y}`, t);
-    }
-
-    const visited = new Set();
-    const regions = [];
-
-    for (const tile of tiles) {
-      const key = `${tile.x},${tile.y}`;
-      if (visited.has(key)) continue;
-
-      const stack = [tile];
-      const region = [];
-
-      while (stack.length) {
-        const cur = stack.pop();
-        const ck = `${cur.x},${cur.y}`;
-        if (visited.has(ck)) continue;
-
-        visited.add(ck);
-        region.push(cur);
-
-        // 4-way neighbors
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-          const nk = `${cur.x + dx},${cur.y + dy}`;
-          if (grid.has(nk) && !visited.has(nk)) {
-            stack.push({ x: cur.x + dx, y: cur.y + dy });
-          }
-        }
-      }
-
-      regions.push(region);
-    }
-
-    return regions;
-  }
-
-  // --------------------------------------------------------------
-  // Convert region tiles into a polygon outline (clockwise)
-  // Simple marching-squares boundary tracing
-  // --------------------------------------------------------------
-  computeRegionOutline(region) {
-    const tileSet = new Set(region.map(t => `${t.x},${t.y}`));
-
-    const edges = [];
-
-    for (const t of region) {
-      const { x, y } = t;
-
-      const isEmpty = (dx, dy) => !tileSet.has(`${x + dx},${y + dy}`);
-
-      if (isEmpty(0, -1)) edges.push([[x, y], [x + 1, y]]);
-      if (isEmpty(1, 0)) edges.push([[x + 1, y], [x + 1, y + 1]]);
-      if (isEmpty(0, 1)) edges.push([[x + 1, y + 1], [x, y + 1]]);
-      if (isEmpty(-1, 0)) edges.push([[x, y + 1], [x, y]]);
-    }
-
-    if (edges.length === 0) return [];
-
-    const outline = [];
-    let [startA, startB] = edges[0];
-    outline.push({ x: startA[0], y: startA[1] });
-
-    let current = startB;
-    let guard = 0;
-
-    while (guard++ < 5000) {
-      outline.push({ x: current[0], y: current[1] });
-
-      const next = edges.find(e => e[0][0] === current[0] && e[0][1] === current[1]);
-      if (!next) break;
-
-      current = next[1];
-      if (current[0] === startA[0] && current[1] === startA[1]) break;
-    }
-
-    return outline;
-  }
-
-  // --------------------------------------------------------------
-  // Apply noise-based organic displacement + corner softness
-  // --------------------------------------------------------------
-  distortPolygon(points, opts = {}) {
-    const noiseScale = opts.noiseScale ?? 0.08;
-    const noiseAmp = opts.noiseAmp ?? 0.25;
-    const cornerSmooth = opts.cornerSmooth ?? 0.5;
-
-    const p = this.p;
-    const out = [];
-
-    for (let i = 0; i < points.length; i++) {
-      const a = points[(i - 1 + points.length) % points.length];
-      const b = points[i];
-      const c = points[(i + 1) % points.length];
-
-      const vx1 = b.x - a.x;
-      const vy1 = b.y - a.y;
-      const vx2 = c.x - b.x;
-      const vy2 = c.y - b.y;
-
-      const avgx = b.x + (vx1 + vx2) * cornerSmooth * 0.5;
-      const avgy = b.y + (vy1 + vy2) * cornerSmooth * 0.5;
-
-      const n = p.noise(b.x * noiseScale, b.y * noiseScale) - 0.5;
-      const angle = Math.atan2(vy1 + vy2, vx1 + vx2);
-
-      const dx = Math.cos(angle) * n * noiseAmp;
-      const dy = Math.sin(angle) * n * noiseAmp;
-
-      out.push({ x: avgx + dx, y: avgy + dy });
-    }
-
-    return out;
-  }
-
-  // --------------------------------------------------------------
-  // Draws organic blobby wall shapes instead of squares
-  // --------------------------------------------------------------
-  drawOrganicBlockingBackground(layer, tiles, opts = {}) {
-    if (!layer || !this.mapTransform) {
-      console.warn('⚠️ drawOrganicBlockingBackground: Missing layer or mapTransform');
-      return;
-    }
-
-    const { tileSizePx, originPx } = this.mapTransform;
-
-    layer.clear();
-    layer.noStroke();
-    const chroma = this.p.shared.chroma;
-    const pc = chroma.terrain;
-    layer.fill(pc[0], pc[1], pc[2], pc[3]);
-
-    const regions = this.extractTileRegions(tiles);
-
-    for (const region of regions) {
-      const outline = this.computeRegionOutline(region);
-      if (outline.length === 0) continue;
-
-      const distorted = this.distortPolygon(outline, opts);
-
-      layer.beginShape();
-      for (const p of distorted) {
-        const sx = originPx.x + p.x * tileSizePx;
-        const sy = originPx.y + p.y * tileSizePx;
-        layer.curveVertex(sx, sy);
-      }
-      layer.endShape(this.p.CLOSE);
-    }
-  }
-
-  drawBlockingBackgroundTransformed(layer, tiles) {
-    if (!layer || !this.mapTransform) {
-      console.warn('⚠️ drawBlockingBackgroundTransformed: Missing layer or mapTransform');
-      return;
-    }
-    const { tileSizePx, originPx } = this.mapTransform;
-
-    layer.clear();
-    layer.noStroke();
-    layer.fill(100, 120, 150);
-
-    for (const t of tiles) {
-      if (t && Number.isFinite(t.x) && Number.isFinite(t.y)) {
-        const px = originPx.x + t.x * tileSizePx;
-        const py = originPx.y + t.y * tileSizePx;
-        layer.rect(px, py, tileSizePx, tileSizePx);
-      }
-    }
-  }
-
-  drawCurrents(layer, drawArrows = true) {
-    if (!this.currentsLookup) return;
-
-    const chroma = this.p.shared.chroma;
-    const pc = chroma.current;
-
-    layer.fill(pc[0], pc[1], pc[2], pc[3]);
-
-    const { tileSizePx, originPx } = this.mapTransform;
-
-    for (const [key, c] of this.currentsLookup.entries()) {
-      layer.noStroke();
-      const { x, y, dx, dy } = c;
-
-      // convert world → screen
-      const { x: sx, y: sy } = this.worldToScreen({ x, y });
-
-      // draw current tile box
-      layer.rect(sx, sy, tileSizePx, tileSizePx);
-
-      if (drawArrows) {
-        // arrow center
-        const cx = sx + tileSizePx * 0.5;
-        const cy = sy + tileSizePx * 0.5;
-
-        // arrow direction scaled for visual clarity
-        const ax = dx * (tileSizePx * 0.01);
-        const ay = dy * (tileSizePx * 0.01);
-
-        layer.stroke(0);
-        layer.strokeWeight(1);
-        layer.line(cx, cy, cx + ax, cy + ay);
-
-        // Simple arrowhead
-        const angle = Math.atan2(ay, ax);
-        const headLen = tileSizePx * 0.15;
-
-        layer.line(
-          cx + ax,
-          cy + ay,
-          cx + ax - headLen * Math.cos(angle - Math.PI / 6),
-          cy + ay - headLen * Math.sin(angle - Math.PI / 6)
-        );
-
-        layer.line(
-          cx + ax,
-          cy + ay,
-          cx + ax - headLen * Math.cos(angle + Math.PI / 6),
-          cy + ay - headLen * Math.sin(angle + Math.PI / 6)
-        );
-      }
-    }
-  }
-
-  drawRainbowBar(layer, tileSize = 32) {
-    if (!layer) {
-      this.Debug.log('level', '⚠️ drawRainbowBar: No layer provided');
-      return;
-    }
-    layer.clear();
-    layer.noStroke();
-    const width = layer.width || 320;
-    const height = tileSize;
-
-    if (typeof layer.colorMode === 'function') layer.colorMode(layer.HSB, 360, 100, 100);
-    for (let x = 0; x < width; x++) {
-      const hue = (x / width) * 360;
-      layer.fill(hue, 100, 100);
-      layer.rect(x, 100, 1, height);
-    }
-    if (typeof layer.colorMode === 'function') layer.colorMode(layer.RGB, 255, 255, 255);
-  }
-
   // ---- Helpers -------------------------------------------------
 
   markDirty(...layers) {
@@ -517,6 +269,13 @@ export class BaseScene {
       `🧭 mapTransform: ${cols}×${rows} tiles, ${tileSizePx}px each, origin=(${originPx.x},${originPx.y}), scale=${scale}`
     );
 
+    this.mapTransform.tileToScreen = (tx, ty) => {
+      return {
+        x: this.mapTransform.originPx.x + tx * this.mapTransform.tileSizePx,
+        y: this.mapTransform.originPx.y + ty * this.mapTransform.tileSizePx
+      };
+    };
+
     return this.mapTransform;
   }
 
@@ -539,4 +298,41 @@ export class BaseScene {
       y: (pt.y - originPx.y) / tileSizePx
     };
   }
+
+  drawTerrainOrganic(layer, opts = {}) {
+    if (!this.levelData) return;
+    DrawTools.drawOrganicBlockingBackground(
+      this.p,
+      layer,
+      this.mapTransform,
+      this.levelData.tiles,
+      opts
+    );
+  }
+
+  drawTerrainBlocking(layer, opts = {}) {
+    if (!this.levelData) return;
+    DrawTools.drawBlockingBackgroundTransformed(
+      this.p,
+      layer,
+      this.mapTransform,
+      this.levelData.tiles,
+      opts
+    );
+  }
+
+  drawCurrentsLayer(layer, opts = {}) {
+    if (!this.currentsLookup) return;
+    // convert Map → array (staticDrawingTools expects an iterable list)
+    const list = Array.from(this.currentsLookup.values());
+    DrawTools.drawCurrents(
+      this.p,
+      layer,
+      this.mapTransform,
+      list,
+      opts
+    );
+  }
+
+
 }

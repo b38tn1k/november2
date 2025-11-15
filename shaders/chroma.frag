@@ -11,7 +11,7 @@ uniform vec4 uChromaEnemy;
 uniform vec4 uChromaTerrain;
 uniform vec4 uChromaCurrents;
 uniform vec4 uChromaBackground;
-uniform vec4 uChromaUI;
+uniform vec4 uChromaAmbient;
 
 bool exitEarly = false;
 
@@ -57,8 +57,8 @@ void main() {
   float dEnemy = distance(maskColor.rgb, uChromaEnemy.rgb);
   float dTerrain = distance(maskColor.rgb, uChromaTerrain.rgb);
   float dBackground = distance(maskColor.rgb, uChromaBackground.rgb);
-  float dUI = distance(maskColor.rgb, uChromaUI.rgb);
   float dCurrents = distance(maskColor.rgb, uChromaCurrents.rgb);
+  float dAmbient = distance(maskColor.rgb, uChromaAmbient.rgb);
 
   float minD = dPlayer;
   vec4 snapped = uChromaPlayer;
@@ -78,13 +78,13 @@ void main() {
     minD = dBackground;
     snapped = uChromaBackground;
   }
-  if (dUI < minD) {
-    minD = dUI;
-    snapped = uChromaUI;
-  }
   if (dCurrents < minD) {
     minD = dCurrents;
     snapped = uChromaCurrents;
+  }
+  if (dAmbient < minD) {
+    minD = dAmbient;
+    snapped = uChromaAmbient;
   }
   maskColor = snapped;
 

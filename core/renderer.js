@@ -35,7 +35,10 @@ void main() {
 }
 `;
 
+
+
 export async function createRenderer(p) {
+
   const renderer = {
     layers: {},
     shaders: {},
@@ -43,7 +46,7 @@ export async function createRenderer(p) {
     activeShader: null,
     activePostShader: 'default',
     layerDirty: {},
-    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer'],
+    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer'], // 'uiLayer' excluded from main layers
     _pendingShaders: {},
     _shaderCache: new Map(),
     frameCount: 0,
@@ -62,6 +65,11 @@ export async function createRenderer(p) {
         this.layers[layerName].textAlign(p.CENTER, p.CENTER);
         this.layers[layerName].textSize(this.layers[layerName].width / 40);
       });
+      this.layers['uiLayer'] = p.createGraphics(p.width, p.height);
+      this.layerDirty['uiLayer'] = true;
+      this.layers['uiLayer'].textFont(p.shared.mainFont);
+      this.layers['uiLayer'].textAlign(p.CENTER, p.CENTER);
+      this.layers['uiLayer'].textSize(this.layers['uiLayer'].width / 40);
 
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
       await this.loadShader('chroma', './shaders/chroma.vert', './shaders/chroma.frag');
@@ -77,6 +85,15 @@ export async function createRenderer(p) {
       // then there could be a final layer mastering one also - water color effect would be nice
 
       // 2d sampler canvas for voroni tile source for coral variation in color etc
+    },
+
+    colorToVec4(c) {
+      return [
+        p.red(c) / 255,
+        p.green(c) / 255,
+        p.blue(c) / 255,
+        p.alpha(c) / 255
+      ];
     },
 
     applyPostShader(shaderName = 'default') {
@@ -97,12 +114,13 @@ export async function createRenderer(p) {
         shader.setUniform('uTime', p.millis() / 1000.0);
 
         const chroma = p.shared.chroma;
-        shader.setUniform('uChromaPlayer', chroma.player.map(c => c / 255));
-        shader.setUniform('uChromaEnemy', chroma.enemy.map(c => c / 255));
-        shader.setUniform('uChromaTerrain', chroma.terrain.map(c => c / 255));
-        shader.setUniform('uChromaBackground', chroma.background.map(c => c / 255));
-        shader.setUniform('uChromaUI', chroma.ui.map(c => c / 255));
-        shader.setUniform('uChromaCurrents', chroma.current.map(c => c / 255));
+        shader.setUniform('uChromaPlayer', this.colorToVec4(chroma.player));
+        shader.setUniform('uChromaEnemy', this.colorToVec4(chroma.enemy));
+        shader.setUniform('uChromaAmbient', this.colorToVec4(chroma.ambient));
+        shader.setUniform('uChromaTerrain', this.colorToVec4(chroma.terrain));
+        shader.setUniform('uChromaBackground', this.colorToVec4(chroma.background));
+        // shader.setUniform('uChromaUI', this.colorToVec4(chroma.ui));
+        shader.setUniform('uChromaCurrents', this.colorToVec4(chroma.current));
 
       } catch (err) {
         console.error('Error setting shader uniforms:', err);
@@ -155,21 +173,24 @@ export async function createRenderer(p) {
       // Composite onto main canvas
 
       // this.base.clear();
-      const chroma = p.shared.chroma;
-      const bg = chroma.background;
-      this.base.background(bg[0], bg[1], bg[2], bg[3]);
+      // const chroma = p.shared.chroma;
+      // const bg = chroma.background;
+      // this.base.background(bg[0], bg[1], bg[2], bg[3]);
+      this.base.background(p.shared.chroma.background);
+
       // p.clear();
 
       const scaleFactor = p.shared.settings.graphicsScaling;
       this.base.image(this.layers.backgroundLayer, -p.width / 2, -p.height / 2, p.width, p.height);
       this.base.image(this.layers.worldLayer, -p.width / 2, -p.height / 2, p.width, p.height);
       this.base.image(this.layers.entitiesLayer, -p.width / 2, -p.height / 2, p.width, p.height);
-      this.base.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
+      // this.base.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
 
       // this was an early idea, I think need to rework for multiple shaders  the 'texture level' shaders and a final pass shader
       // we might need to think on additional texture shaders required
       this.applyPostShader(this.activePostShader);
       p.resetShader();
+      p.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
 
       // Check renderer readiness
       if (!this.ready && Object.keys(this._pendingShaders).length === 0) {

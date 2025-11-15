@@ -31,8 +31,19 @@ export const mainSketch = (p) => {
     p.shared.settings = Settings
     p.shared.timing = createTiming(p);
 
+    let colorCount = Object.keys(p.shared.chroma).length
+    let colorAngle = 255 / colorCount;
+    p.colorMode(p.HSL, 255);
+    let hue = 0;
+    let saturation = 255;
+    let level = 128;
+    for (let k in p.shared.chroma) {
+      p.shared.chroma[k] = p.color(hue, saturation, level);
+      hue += colorAngle;
+    }
+
     setupCanvasWithAdaptation(p);
-    
+
     p.pixelDensity(p.shared.settings.pixelDensity);
     p.frameRate(p.shared.settings.fps);
     p.textFont(p.shared.mainFont);
@@ -40,7 +51,7 @@ export const mainSketch = (p) => {
     p.textSize(p.width / 30);
 
 
-    
+
     p.shared.parseLevel = parseLevel;
     p.shared.state = createGameState();
     p.shared.renderer = await createRenderer(p);
@@ -48,7 +59,7 @@ export const mainSketch = (p) => {
     p.shared.ui = createUI(p);
     p.shared.player = new Player(p);
 
-    
+
     registerSystemEvents(p);
     registerControls(p);
 
