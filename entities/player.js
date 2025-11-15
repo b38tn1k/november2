@@ -1,14 +1,14 @@
 import { BaseEntity } from '../core/BaseEntity.js';
 
-const ROOT_RADIUS = 0.15;    // collision radius in tiles
-const STEM_SEG_LENGTH = 0.20;    // each stem segment
-const FROND_SPREAD = 0.32;    // horizontal fan spread
-const FROND_HEIGHT = 0.28;    // how high the fronds sit
-const SPRING_K = 2.0;           // mid stiffness, stable
-const SPRING_DAMP = 0.90;    // high damping for underwater
-const FROND_MASS = 1.0;
-const STEM_MASS = 1.5;
-const ROOT_MASS = 2.0;
+const ROOT_RADIUS = 0.15;
+const STEM_SEG_LENGTH = 0.20;
+const FROND_SPREAD = 0.32;
+const FROND_HEIGHT = 0.28;
+const SPRING_K = 1.2;
+const SPRING_DAMP = 0.99;
+const FROND_MASS = 1;
+const STEM_MASS = 4;
+const ROOT_MASS = 12;
 
 export class Player extends BaseEntity {
     constructor(p) {
@@ -131,12 +131,6 @@ export class Player extends BaseEntity {
         const pc = chroma.player;
         layer.stroke(pc[0], pc[1], pc[2], pc[3]);
         layer.strokeWeight(4);
-
-        for (const particle of this.physicsParticles) {
-            const pos = this.scene.worldToScreen(particle.pos);
-            // const pos = particle.pos;
-            layer.circle(pos.x, pos.y, 5);
-        }
 
         for (const indexes of this.frond_particle_indexes) {
             const sp = this.scene.worldToScreen(this.physicsParticles[indexes[0]].pos); // start

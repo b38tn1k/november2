@@ -34,7 +34,11 @@ export class BaseScene {
     if (this.levelData) {
       this.computeMapTransform(this.levelData, { paddingPx: this.padding });
       player.setScene(this);
-      player.reset(this.levelData.spawn);
+      const spawnWorld = {
+        x: this.levelData.spawn.x + 0.5,
+        y: this.levelData.spawn.y + 0.5
+      };
+      player.reset(spawnWorld);
       this.tileLookup = new Map();
       for (const t of this.levelData.tiles) {
         const key = `${t.x},${t.y}`;

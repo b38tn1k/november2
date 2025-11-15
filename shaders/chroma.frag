@@ -92,13 +92,14 @@ void main() {
   float eps = 0.05;
   bool isTerrain = distance(maskColor.rgb, uChromaTerrain.rgb) < eps;
   bool isBackground = distance(maskColor.rgb, uChromaBackground.rgb) < eps;
+  bool isCurrents = distance(maskColor.rgb, uChromaCurrents.rgb) < eps;
 
   if (exitEarly) {
     gl_FragColor = maskColor;
     return;
   }
 
-  if (isBackground) {
+  if (isBackground || isCurrents) {
 
     vec2 p = uv;
 

@@ -51,6 +51,8 @@ export class BaseEntity {
     this.mainPhysicsParticle.pos.y = spawn.y;
     this.mainPhysicsParticle.vel.x = 0;
     this.mainPhysicsParticle.vel.y = 0;
+    this.mainPhysicsParticle.prevPos.x = spawn.x;
+    this.mainPhysicsParticle.prevPos.y = spawn.y;
 
     const stack = [...this.mainPhysicsParticle.children];
     while (stack.length > 0) {
@@ -59,6 +61,9 @@ export class BaseEntity {
       c.vel.y = 0;
       c.pos.x = this.mainPhysicsParticle.pos.x + c.offsets.x;
       c.pos.y = this.mainPhysicsParticle.pos.y + c.offsets.y;
+      c.prevPos.x = c.pos.x;
+      c.prevPos.y = c.pos.y;
+
       stack.push(...c.children);
     }
   }

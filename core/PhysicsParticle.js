@@ -17,7 +17,7 @@ export class PhysicsParticle {
         this.springK = 0.2;
         this.springDamping = 0.85;
 
-        this.damping = 1.0;  // velocity damping
+        this.damping = 0.95;  // velocity damping
         this.forceDamping = 0.0;
 
         this.contactAxes = { x: false, y: false };
@@ -87,10 +87,6 @@ export class PhysicsParticle {
     /** -------------------------------------------------------
      *  PREP FOR VERLET
      * ------------------------------------------------------*/
-    storePrevPosition() {
-        this.prevPos.x = this.pos.x;
-        this.prevPos.y = this.pos.y;
-    }
 
     integrateVerlet(dt) {
         if (this.invMass === 0) {
@@ -100,17 +96,36 @@ export class PhysicsParticle {
 
         const dt2 = dt * dt;
 
-        const nx = this.pos.x + (this.pos.x - this.prevPos.x) * this.damping + (this.force.x * this.invMass) * dt2;
-        const ny = this.pos.y + (this.pos.y - this.prevPos.y) * this.damping + (this.force.y * this.invMass) * dt2;
+        const oldX = this.pos.x;
+        const oldY = this.pos.y;
 
-        this.prevPos.x = this.pos.x;
-        this.prevPos.y = this.pos.y;
+        const velx = this.pos.x - this.prevPos.x;
+        const vely = this.pos.y - this.prevPos.y;
 
+        const ax = this.force.x * this.invMass * dt2;
+        const ay = this.force.y * this.invMass * dt2;
+
+        const nx = this.pos.x + velx * this.damping + ax;
+        const ny = this.pos.y + vely * this.damping + ay;
+
+        // write new prevPos
+        this.prevPos.x = oldX;
+        this.prevPos.y = oldY;
+
+        // write new pos
         this.pos.x = nx;
         this.pos.y = ny;
 
         this.force.x = 0;
         this.force.y = 0;
+
+        // console.log('Verlet integrate',
+        //     'pos:', this.pos.x.toFixed(3), this.pos.y.toFixed(3),
+        //     'prev:', this.prevPos.x.toFixed(3), this.prevPos.y.toFixed(3),
+        //     'vel:', velx.toFixed(3), vely.toFixed(3),
+        //     'accel:', ax.toFixed(3), ay.toFixed(3),
+        //     'new:', nx.toFixed(3), ny.toFixed(3)
+        // );
     }
 
     /** -------------------------------------------------------

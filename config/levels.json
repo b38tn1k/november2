@@ -68,8 +68,8 @@
     },
 
     "currentsLegend": {
-      "q": { "dx": 100, "dy": 0, "style": "current", "params": {} },
-      "w": { "dx": 0.5, "dy": 0, "style": "current", "params": {} }
+      "q": { "dx":5, "dy": 0, "style": "current", "params": {} },
+      "w": { "dx": 0, "dy": 0, "style": "current", "params": {} }
     },
 
     "entityLegend": {

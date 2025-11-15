@@ -43,9 +43,6 @@ export class PhysicsSolver {
         // 4. integrate positions and velocities
         if (this.integrator === 'verlet') {
             for (const p of particles) {
-                p.storePrevPosition();
-            }
-            for (const p of particles) {
                 p.integrateVerlet(dt);
             }
         } else {

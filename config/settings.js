@@ -5,7 +5,7 @@ export const Settings = {
     debounceTime: 30, // ms
     enableShaders: false,
     paddingRatio: 0.02, 
-    playerSpeed: 400,
-    sinkancy: 30,
-    buoyancy: -10
+    playerSpeed: 10,
+    sinkancy: 6,
+    buoyancy: -3.5
   };
