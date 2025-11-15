@@ -5,7 +5,7 @@ export const Settings = {
     debounceTime: 30, // ms
     enableShaders: false,
     paddingRatio: 0.02, 
-    playerSpeed: 10,
+    playerSpeed: 2,
     playerSinkancy: 6,
     playerBuoyancy: -3.5,
     playerStrokeWeight: 0.006,

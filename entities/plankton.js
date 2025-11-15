@@ -76,37 +76,76 @@ export class Plankton extends BaseEntity {
         this.Debug?.log('player', `Ended ${action}`);
     }
 
+    applyPerlinFlow(mp, dt) {
+        const s = 15;             // spatial scale
+        const t = this.p.millis() * 0.0002; // time scale
+
+        const nx = this.p.noise(mp.pos.x * s, mp.pos.y * s, t);
+        const ny = this.p.noise(mp.pos.x * s + 100, mp.pos.y * s + 100, t);
+
+        const fx = this.p.map(nx, 0, 1, -1, 1) * this.speed;
+        const fy = this.p.map(ny, 0, 1, -1, 1) * this.speed;
+
+        mp.addForce(fx * 0.2, fy * 0.2);   // scale down for gentleness
+    }
+
+    // applyForces(dt) {
+    //     super.applyForces(dt);
+    //     const mp = this.mainPhysicsParticle;
+
+    //     if (this.p.shared.timing.every(this.restlessness)) {
+    //         mp.addForce(this.p.random(-this.speed, this.speed), this.p.random(-this.speed, this.speed));
+
+    //         this.baseBuoyancy = -1 * this.baseBuoyancy;
+    //     }
+
+    //     // wall escape
+    //     const tile = this.scene.getTile(
+    //         Math.floor(mp.pos.x),
+    //         Math.floor(mp.pos.y)
+    //     );
+
+    //     if (tile && tile.solid) {
+    //         const awayX = mp.pos.x - (Math.floor(mp.pos.x) + 0.5);
+    //         const awayY = mp.pos.y - (Math.floor(mp.pos.y) + 0.5);
+
+    //         const mag = 0.5; // extremely gentle push-off
+    //         mp.addForce(awayX * mag, awayY * mag);
+    //     }
+
+    //     // Brownian drift (tiny turbulence always)
+    //     mp.addForce(
+    //         this.p.random(-0.2, 0.2),
+    //         this.p.random(-0.2, 0.2)
+    //     );
+
+    //     if (!mp) return;
+    // }
+
     applyForces(dt) {
         super.applyForces(dt);
+
         const mp = this.mainPhysicsParticle;
+        if (!mp) return;
 
-        if (this.p.shared.timing.every(this.restlessness)) {
-            mp.addForce(this.p.random(-this.speed, this.speed), this.p.random(-this.speed, this.speed));
+        // 1. Perlin-flow vector field
+        this.applyPerlinFlow(mp, dt);
 
-            this.baseBuoyancy = -1 * this.baseBuoyancy;
+        // 2. Very small restlessness impulse (optional)
+        if (this.p.shared.timing.every(this.restlessness * 4)) {
+            mp.addForce(
+                this.p.random(-this.speed * 0.2, this.speed * 0.2),
+                this.p.random(-this.speed * 0.2, this.speed * 0.2)
+            );
         }
 
-        // wall escape
-        const tile = this.scene.getTile(
-            Math.floor(mp.pos.x),
-            Math.floor(mp.pos.y)
-        );
-
+        // 3. Gentle wall repulsion still helps
+        const tile = this.scene.getTile(Math.floor(mp.pos.x), Math.floor(mp.pos.y));
         if (tile && tile.solid) {
             const awayX = mp.pos.x - (Math.floor(mp.pos.x) + 0.5);
             const awayY = mp.pos.y - (Math.floor(mp.pos.y) + 0.5);
-
-            const mag = 0.5; // extremely gentle push-off
-            mp.addForce(awayX * mag, awayY * mag);
+            mp.addForce(awayX * 0.5, awayY * 0.5);
         }
-
-        // Brownian drift (tiny turbulence always)
-        mp.addForce(
-            this.p.random(-0.2, 0.2),
-            this.p.random(-0.2, 0.2)
-        );
-
-        if (!mp) return;
     }
 
     postPhysics() {
