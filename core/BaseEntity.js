@@ -29,6 +29,10 @@ export class BaseEntity {
     this.scene = scene;
   }
 
+  onCurrent(particle, current) {
+    particle.addForce(current.dx, current.dy);
+  }
+
   applyForces(dt) {
     // default global buoyancy support
     if (!this.mainPhysicsParticle) return;

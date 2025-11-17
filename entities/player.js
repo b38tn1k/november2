@@ -52,10 +52,12 @@ export class Player extends BaseEntity {
         stem1.springK = SPRING_K;
         stem1.springDamping = SPRING_DAMP;
         stem1.mass = STEM_MASS;
+        stem1.updateRadii(ROOT_RADIUS, this.size);
 
         const stem2 = stem1.createChild(0, -STEM_SEG_LENGTH, STEM_SEG_LENGTH);
         stem2.springK = SPRING_K;
         stem2.springDamping = SPRING_DAMP;
+        stem2.updateRadii(ROOT_RADIUS, this.size);
 
         const tip = stem2; // fronds attach here
 
@@ -75,6 +77,7 @@ export class Player extends BaseEntity {
             frond.springK = SPRING_K * 0.8;     // slightly softer
             frond.springDamping = SPRING_DAMP;
             frond.mass = FROND_MASS;
+            frond.updateRadii(ROOT_RADIUS, this.size);
 
             this.physicsParticles.push(frond);
 
@@ -88,6 +91,12 @@ export class Player extends BaseEntity {
         // Label debug
         let i = 0;
         for (const p of this.physicsParticles) p.label = `anen_${i++}`;
+    }
+
+    onCurrent(particle, current) {
+        if (current.levelDefinitionCurrent) {
+            particle.addForce(current.dx, current.dy);
+        }
     }
 
     onActionStart(action) {

@@ -56,7 +56,10 @@ export class Level1Scene extends BaseScene {
 
                 this.drawWorldBoundary(layers.worldLayer);
 
-                this.drawCurrentsLayer(layers.worldLayer);
+                this.drawCurrentsLayer(layers.worldLayer, { skipGenerated: true });
+                // this.drawCurrentsLayer(layers.worldLayer, { skipGenerated: false });
+
+                // this.drawWorldGrid(layers.worldLayer);
             }
 
             for (const entity of this.entities) {

@@ -13,7 +13,7 @@ export class Plankton extends BaseEntity {
         this.speed = p.shared.settings.ambientSpeed;
         this.sinkancy = p.shared.settings.ambientSinkancy;
         this.baseBuoyancy = p.shared.settings.ambientBuoyancy;
-        this.restlessness = p.random() * 3 + 1;
+        this.restlessness = p.random() * 6 + 1;
 
         this.mainPhysicsParticle = this.createPhysicsParticle(
             0, 0,      // x,y
@@ -89,62 +89,21 @@ export class Plankton extends BaseEntity {
         mp.addForce(fx * 0.2, fy * 0.2);   // scale down for gentleness
     }
 
-    // applyForces(dt) {
-    //     super.applyForces(dt);
-    //     const mp = this.mainPhysicsParticle;
-
-    //     if (this.p.shared.timing.every(this.restlessness)) {
-    //         mp.addForce(this.p.random(-this.speed, this.speed), this.p.random(-this.speed, this.speed));
-
-    //         this.baseBuoyancy = -1 * this.baseBuoyancy;
-    //     }
-
-    //     // wall escape
-    //     const tile = this.scene.getTile(
-    //         Math.floor(mp.pos.x),
-    //         Math.floor(mp.pos.y)
-    //     );
-
-    //     if (tile && tile.solid) {
-    //         const awayX = mp.pos.x - (Math.floor(mp.pos.x) + 0.5);
-    //         const awayY = mp.pos.y - (Math.floor(mp.pos.y) + 0.5);
-
-    //         const mag = 0.5; // extremely gentle push-off
-    //         mp.addForce(awayX * mag, awayY * mag);
-    //     }
-
-    //     // Brownian drift (tiny turbulence always)
-    //     mp.addForce(
-    //         this.p.random(-0.2, 0.2),
-    //         this.p.random(-0.2, 0.2)
-    //     );
-
-    //     if (!mp) return;
-    // }
-
     applyForces(dt) {
         super.applyForces(dt);
 
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
 
-        // 1. Perlin-flow vector field
-        this.applyPerlinFlow(mp, dt);
+        // 1. Perlin-flow vector field (secondary perlin layer, but looks cooler)
+        // this.applyPerlinFlow(mp, dt);
 
         // 2. Very small restlessness impulse (optional)
-        if (this.p.shared.timing.every(this.restlessness * 4)) {
+        if (this.p.shared.timing.every(this.restlessness)) {
             mp.addForce(
-                this.p.random(-this.speed * 0.2, this.speed * 0.2),
-                this.p.random(-this.speed * 0.2, this.speed * 0.2)
+                this.p.random(-this.speed, this.speed),
+                this.p.random(-this.speed, this.speed)
             );
-        }
-
-        // 3. Gentle wall repulsion still helps
-        const tile = this.scene.getTile(Math.floor(mp.pos.x), Math.floor(mp.pos.y));
-        if (tile && tile.solid) {
-            const awayX = mp.pos.x - (Math.floor(mp.pos.x) + 0.5);
-            const awayY = mp.pos.y - (Math.floor(mp.pos.y) + 0.5);
-            mp.addForce(awayX * 0.5, awayY * 0.5);
         }
     }
 

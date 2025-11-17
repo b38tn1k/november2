@@ -38,44 +38,6 @@ export function drawWorldBoundary(p, layer, mapTransform) {
   }
 }
 
-// export function drawWorldBoundary(p, layer, mapTransform) {
-//   if (!layer || !mapTransform) {
-//     console.warn('⚠️ drawWorldBoundary: Missing layer or mapTransform');
-//     return;
-//   }
-
-//   const { cols, rows, tileSizePx, originPx } = mapTransform;
-
-//   layer.noStroke();
-//   layer.fill(p.shared.chroma.terrain);
-
-//   // Top and bottom boundaries
-//   for (let x = -1; x <= cols; x++) {
-//     // top
-//     const sxTop = originPx.x + x * tileSizePx;
-//     const syTop = originPx.y + -1 * tileSizePx;
-//     layer.rect(sxTop, syTop, tileSizePx, tileSizePx);
-
-//     // bottom
-//     const sxBot = originPx.x + x * tileSizePx;
-//     const syBot = originPx.y + rows * tileSizePx;
-//     layer.rect(sxBot, syBot, tileSizePx, tileSizePx);
-//   }
-
-//   // Left and right boundaries
-//   for (let y = -1; y <= rows; y++) {
-//     // left
-//     const sxLeft = originPx.x + -1 * tileSizePx;
-//     const syLeft = originPx.y + y * tileSizePx;
-//     layer.rect(sxLeft, syLeft, tileSizePx, tileSizePx);
-
-//     // right
-//     const sxRight = originPx.x + cols * tileSizePx;
-//     const syRight = originPx.y + y * tileSizePx;
-//     layer.rect(sxRight, syRight, tileSizePx, tileSizePx);
-//   }
-// }
-
 export function drawOrganicBlockingBackground(p, layer, mapTransform, tiles, opts = {}) {
   if (!layer || !mapTransform) {
     console.warn('⚠️ drawOrganicBlockingBackground: Missing layer or mapTransform');

@@ -63,40 +63,25 @@ export class BaseScene {
     const dt = this.p.shared.timing.delta;
 
     this.sceneFrameCount++;
-    this.recentlyLaunchedScene = this.sceneFrameCount < 5;
+    this.recentlyLaunchedScene = isNaN(this.sceneFrameCount) || this.sceneFrameCount < 10;
+
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
 
     // 1. apply entity forces
     for (const entity of this.entities) {
       entity.applyForces(dt);
-      const p = entity.mainPhysicsParticle;
-      if (p) {
-        const cx = Math.floor(p.pos.x);
-        const cy = Math.floor(p.pos.y);
-        const current = this.getCurrent(cx, cy);
-        if (current) {
-          this.Debug.log('level', `Applying current to entity at (${cx},${cy}): dx=${current.dx}, dy=${current.dy}`);
-          p.addForce(current.dx, current.dy);
+      for (const p of entity.physicsParticles) {
+        if (p) {
+          const cx = Math.floor(p.pos.x);
+          const cy = Math.floor(p.pos.y);
+          const current = this.getCurrent(cx, cy);
+          if (current) {
+            entity.onCurrent(p, current); 
+            // p.addForce(current.dx, current.dy);
+          }
         }
       }
     }
-
-    // NEED TO WORK ON MAKING THIS VERSION WORK VVV
-
-    // for (const entity of this.entities) {
-    //   entity.applyForces(dt);
-
-    //   if (entity.physicsParticles && entity.physicsParticles.length > 0) {
-    //     for (const particle of entity.physicsParticles) {
-    //       const cx = Math.floor(particle.pos.x);
-    //       const cy = Math.floor(particle.pos.y);
-    //       const current = this.getCurrent(cx, cy);
-    //       if (current) {
-    //         particle.addForce(current.dx, current.dy);
-    //       }
-    //     }
-    //   }
-    // }
 
     // 2. gather root particles (for example, each entity exposes mainPhysicsParticle)
     const roots = [];

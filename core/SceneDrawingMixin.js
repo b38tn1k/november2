@@ -25,14 +25,17 @@ export const SceneDrawingMixin = {
   },
 
   drawCurrentsLayer(layer, opts = {}) {
+    // { skipGenerated: true } what if this?
     if (!this.currentsLookup) return;
-    const list = Array.from(this.currentsLookup.values());
+    let myList = Array.from(this.currentsLookup.values());
+    if (opts.skipGenerated) {
+      myList = myList.filter(c => c.legend !== 'border' && c.legend !== 'tileEdge' && c.legend !== 'ambient');
+    }
     DrawTools.drawCurrents(
       this.p,
       layer,
       this.mapTransform,
-      list,
-      opts
+      myList
     );
   },
 
@@ -42,6 +45,21 @@ export const SceneDrawingMixin = {
       layer,
       this.mapTransform
     );
+  },
+
+  drawWorldGrid(layer) {
+    console.log(this.mapTransform);
+    const pix = this.mapTransform.tileSizePx;
+    const og = this.mapTransform.originPx;
+    layer.noFill();
+    layer.strokeWeight(1);
+    layer.stroke(255);
+    for (let i = 0; i < this.mapTransform.cols; i++) {
+      for (let j = 0; j < this.mapTransform.rows; j++) {
+        layer.square(og.x + i * pix, og.y + j * pix, pix);
+      }
+    }
   }
+
 
 };
