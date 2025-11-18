@@ -59,7 +59,7 @@ export class Level1Scene extends BaseScene {
                 // this.drawWorldGrid(layers.worldLayer);
             }
             for (const entity of this.entities) {
-                entity.draw(layers.entitiesLayer);
+                entity.draw(layers.entitiesLayer, layers.ambientTexture);
             }
             ui.draw(layers.uiLayer);
             super.draw();

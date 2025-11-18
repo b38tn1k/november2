@@ -2,6 +2,7 @@
   "player": null,
   "ambient": null,
   "terrain": null,
+  "vegetation": null,
   "current": null,
   "background": null,
   "enemy": null

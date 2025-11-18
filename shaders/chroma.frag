@@ -3,6 +3,7 @@ precision mediump float;
 #endif
 
 uniform sampler2D tex0;
+uniform sampler2D ambientTexture;
 uniform vec2 uResolution;
 uniform float uTime;
 
@@ -164,6 +165,107 @@ void main() {
     starfishColor += vec3(1.0, 0.6, 1.0) * spark * 0.3;
 
     gl_FragColor = vec4(starfishColor, 1.0);
+    return;
+  }
+
+  if (isAmbient) {
+
+    // -------------------------------
+    //   A M B I E N T   P L A N K T O N
+    //   Textured from ambientTexture
+    //   Tropical shimmer + micro-glow
+    // -------------------------------
+
+    vec2 p = uv;
+
+    // ---------------------------------------------
+    // 1. Sample sprite from ambient texture atlas
+    // ---------------------------------------------
+    // We assume uv matches the sprite position already.
+    // If you tile atlas regions per plankton, you'll adjust this mapping.
+    vec4 sprite = texture2D(ambientTexture, uv);
+
+    // If this pixel isn't part of a sprite, output nothing.
+    // (Plankton sprites draw opaque pixels; empty regions = 0 alpha)
+    if (sprite.a < 0.01) {
+      discard;
+    }
+
+    vec3 col = sprite.rgb;
+
+    // ---------------------------------------------
+    // 2. Subtle UV wobble (micro swimming motion)
+    // ---------------------------------------------
+    float wobbleX = sin(uTime * 1.3 + p.y * 12.0) * 0.004;
+    float wobbleY = cos(uTime * 1.7 + p.x * 10.0) * 0.004;
+    vec2 wobUv = uv + vec2(wobbleX, wobbleY);
+
+    // Re-sample with wobble for liquid motion
+    col = texture2D(ambientTexture, wobUv).rgb;
+
+    // ---------------------------------------------
+    // 3. Slow hue drift (organic color breathing)
+    // ---------------------------------------------
+    float t = uTime * 0.15;
+    float angle = sin(t + uv.x * 3.0) * 0.25; // subtle phase offset
+
+    // simple 3x3 hue rotation approximation
+    float s = sin(angle);
+    float c = cos(angle);
+    mat3 hue =
+        mat3(vec3(0.299 + 0.701 * c + 0.168 * s, 0.587 - 0.587 * c + 0.330 * s,
+                  0.114 - 0.114 * c - 0.497 * s),
+             vec3(0.299 - 0.299 * c - 0.328 * s, 0.587 + 0.413 * c + 0.035 * s,
+                  0.114 - 0.114 * c + 0.292 * s),
+             vec3(0.299 - 0.300 * c + 1.250 * s, 0.587 - 0.588 * c - 1.050 * s,
+                  0.114 + 0.886 * c - 0.203 * s));
+
+    col = hue * col;
+
+    // ---------------------------------------------
+    // 4. Reef tinting (coral-reef palette bias)
+    // ---------------------------------------------
+    vec3 reefTint1 = vec3(0.10, 0.65, 0.75); // turquoise reef
+    vec3 reefTint2 = vec3(0.95, 0.45, 0.65); // coral pink
+    vec3 reefTint3 = vec3(0.60, 0.85, 0.50); // green-yellow biolume
+
+    float sel = noise(uv * 20.0); // pick tint by local UV noise
+    vec3 targetTint = sel < 0.33   ? reefTint1
+                      : sel < 0.66 ? reefTint2
+                                   : reefTint3;
+
+    col = mix(col, targetTint, 0.12);
+
+    // ---------------------------------------------
+    // 5. Bioluminescent micro-sparkles
+    // ---------------------------------------------
+    float spark = noise(uv * 120.0 + uTime * 1.3);
+    spark = smoothstep(0.93, 0.98, spark);
+    vec3 glow = vec3(0.7, 0.9, 1.0) * spark * 0.25;
+    col += glow;
+
+    // ---------------------------------------------
+    // 6. Soft global pulse (breathing)
+    // ---------------------------------------------
+    float pulse = sin(uTime * 1.7 + uv.x * 4.0 + uv.y * 6.0) * 0.5 + 0.5;
+    col *= 0.85 + pulse * 0.15;
+
+    // ---------------------------------------------
+    // 7. Slight darkening toward plankton edges
+    //    to preserve shape definition
+    // ---------------------------------------------
+    // float edge = smoothstep(0.05, 0.20, sprite.a);
+    // col *= edge * 1.05;
+
+    // ---------------------------------------------
+    // 8. Edge soften into background (feather fade)
+    // ---------------------------------------------
+    // Use sprite alpha as an edge mask for soft blending
+    float edgeFade = smoothstep(0.0, 0.25, sprite.a);
+    vec3 bgColor = uChromaBackground.rgb;
+    col = mix(bgColor, col, edgeFade);
+
+    gl_FragColor = vec4(col, 1.0);
     return;
   }
 

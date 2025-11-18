@@ -3,7 +3,7 @@ export const Settings = {
     pixelDensity: 1,
     graphicsScaling: 2,
     debounceTime: 30, // ms
-    enableShaders: false,
+    enableShaders: true,
     paddingRatio: 0.01, 
     playerSpeed: 2,
     playerSinkancy: 6,

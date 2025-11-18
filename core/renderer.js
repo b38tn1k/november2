@@ -46,7 +46,7 @@ export async function createRenderer(p) {
     activeShader: null,
     activePostShader: 'default',
     layerDirty: {},
-    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer'],
+    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer', 'ambientTexture'],
     _pendingShaders: {},
     _shaderCache: new Map(),
     frameCount: 0,
@@ -105,6 +105,7 @@ export async function createRenderer(p) {
       p.shader(shader);
       try {
         shader.setUniform('tex0', this.base);
+        shader.setUniform('ambientTexture', this.layers.ambientTexture);
         shader.setUniform('uResolution', [p.width, p.height]);
         shader.setUniform('uTime', p.millis() / 1000.0);
 

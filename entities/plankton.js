@@ -14,6 +14,14 @@ export class Plankton extends BaseEntity {
         this.sinkancy = p.shared.settings.ambientSinkancy;
         this.baseBuoyancy = p.shared.settings.ambientBuoyancy;
         this.restlessness = p.random() * 6 + 1;
+        const reefColors = [
+            p.color(255, 80, 140),   // coral pink
+            p.color(20, 210, 200),   // turquoise reef
+            p.color(180, 255, 110),   // lime-yellow biolume
+            p.color(220, 90, 255),   // violet sea sponge
+            // p.color(255, 165, 40)    // orange anthias
+        ];
+        this.color = p.random(reefColors);
 
         this.mainPhysicsParticle = this.createPhysicsParticle(
             0, 0,      // x,y
@@ -27,6 +35,9 @@ export class Plankton extends BaseEntity {
 
         const root = this.mainPhysicsParticle;
         root.mass = BODY_MASS;
+
+        this.art = p.createGraphics(64, 64);
+        this.generateArt();
     }
 
     initAmbientEntity() {
@@ -36,6 +47,7 @@ export class Plankton extends BaseEntity {
 
         let tries = 0;
         const maxTries = 200;
+        this.generateArt();
 
         while (tries++ < maxTries) {
             const x = Math.floor(Math.random() * cols);
@@ -116,11 +128,74 @@ export class Plankton extends BaseEntity {
         this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
     }
 
-    draw(layer) {
+    generateArt() {
+        // https://b38tn1k.github.io/#demos/lumpy-space
+        function randomInRange(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+
+        function invader(layer, x, y, pixelSize, scolor) {
+            //crab 8 x 11
+            //squid 8 x 8
+            //octopus 8 x 12
+            let invLength = randomInRange(3, 5);
+            let invHeight = randomInRange(3, 5);
+            layer.fill(scolor);
+            layer.stroke(scolor);
+
+            let maxVal = 0.0;
+            let sum = 0;
+            let count = 0;
+            const grid = Array.from({ length: invLength }, (_, i) =>
+                Array.from({ length: invHeight }, (_, j) => {
+                    let val = Math.random() * 2;
+                    val += Math.sin(Math.PI * 90 * i / invLength / 180);
+                    val += Math.sin(Math.PI * 180 * j / invHeight / 180);
+
+                    maxVal = Math.max(maxVal, val);
+                    return val;
+                })
+            );
+
+            // Normalizing and calculating the threshold
+            grid.forEach(row => row.forEach((cell, j) => {
+                const normalizedCell = cell / maxVal;
+                row[j] = normalizedCell;
+                sum += normalizedCell;
+                count++;
+            }));
+            const threshold = sum / count;
+
+            // Drawing part
+            for (let isMirrored of [false, true]) {
+                for (let i = 0; i < invLength; i++) {
+                    for (let j = 0; j < invHeight; j++) {
+                        if (grid[isMirrored ? invLength - i - 1 : i][j] > threshold) {
+                            const xPos = x + (isMirrored ? i : i - invLength) * pixelSize;
+                            const yPos = y + j * pixelSize - Math.floor(invHeight / 2) * pixelSize;
+                            layer.rect(xPos, yPos, pixelSize, pixelSize);
+                        }
+                    }
+                }
+            }
+        }
+        invader(this.art, this.art.width / 2, this.art.height / 2, 4, this.p.shared.chroma.ambient);
+        // this.art
+
+    }
+
+    draw(layer, texture) {
         if (!this.visible || !this.scene) return;
         const { x, y } = this.scene.worldToScreen(this.worldPos);
-        layer.fill(this.p.shared.chroma.ambient);
-        layer.noStroke();
-        layer.circle(x, y, this.pxSize);
+        const dims = Math.floor(this.pxSize * 6);
+        layer.imageMode(this.p.CENTER);
+        layer.image(this.art, x, y, dims, dims);
+
+        texture.fill(this.color);
+        texture.circle(x, y, dims * 2);
+
+        // layer.fill(this.p.shared.chroma.ambient);
+        // layer.noStroke();
+        // layer.circle(x, y, this.pxSize);
     }
 }
