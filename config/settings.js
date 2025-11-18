@@ -1,10 +1,10 @@
 export const Settings = {
     fps: 30,
     pixelDensity: 1,
-    graphicsScaling: 1.5,
+    graphicsScaling: 2,
     debounceTime: 30, // ms
     enableShaders: false,
-    paddingRatio: 0.02, 
+    paddingRatio: 0.01, 
     playerSpeed: 2,
     playerSinkancy: 6,
     playerBuoyancy: -3.5,

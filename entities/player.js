@@ -15,6 +15,7 @@ export class Player extends BaseEntity {
         super(p);
 
         this.size = 1.0;
+        this.ambientCurrentScale = 0.5;
 
         this.speed = 40;
         this.speed = p.shared.settings.playerSpeed || 40;
@@ -93,9 +94,15 @@ export class Player extends BaseEntity {
         for (const p of this.physicsParticles) p.label = `anen_${i++}`;
     }
 
+    cleanup() {
+        // intentional no-op
+    }
+
     onCurrent(particle, current) {
         if (current.levelDefinitionCurrent) {
             particle.addForce(current.dx, current.dy);
+        } else {
+            particle.addForce(current.dx * this.ambientCurrentScale, current.dy * this.ambientCurrentScale);
         }
     }
 

@@ -95,8 +95,8 @@ export class Plankton extends BaseEntity {
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
 
-        // 1. Perlin-flow vector field (secondary perlin layer, but looks cooler)
-        // this.applyPerlinFlow(mp, dt);
+        // 1. Perlin-flow vector field (secondary perlin layer, looks cooler but is a bit more overhead)
+        this.applyPerlinFlow(mp, dt);
 
         // 2. Very small restlessness impulse (optional)
         if (this.p.shared.timing.every(this.restlessness)) {
@@ -106,6 +106,7 @@ export class Plankton extends BaseEntity {
             );
         }
     }
+
 
     postPhysics() {
         const mp = this.mainPhysicsParticle;

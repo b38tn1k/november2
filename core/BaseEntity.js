@@ -13,9 +13,6 @@ export class BaseEntity {
     this.baseBuoyancy = 0;      // default buoyancy for floating entities
   }
 
-  initAmbientEntity() {
-  }
-
   createPhysicsParticle(x, y, mass = 1, main = false, fixed = false) {
     const physicsParticle = new PhysicsParticle(x, y, mass, main, fixed);
     if (main) {
@@ -27,6 +24,11 @@ export class BaseEntity {
 
   setScene(scene) {
     this.scene = scene;
+  }
+
+  cleanup() {
+    this.mainPhysicsParticle = null;
+    this.physicsParticles.length = 0;
   }
 
   onCurrent(particle, current) {

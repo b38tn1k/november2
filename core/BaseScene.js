@@ -2,6 +2,9 @@ import { PhysicsWorld } from './PhysicsWorld.js';
 import { PhysicsSolver } from './PhysicsSolver.js';
 import { GeometryTools } from './GeometryTools.js';
 import { SceneDrawingMixin } from './SceneDrawingMixin.js';
+import { generateCurrents } from './generateCurrents.js';
+import { MyButton } from '../components/myButton.js';
+
 export class BaseScene {
   constructor(p) {
     this.p = p;
@@ -12,19 +15,11 @@ export class BaseScene {
     this.recentlyChangedScene = true;
     this.lastSceneChangeFrameNumber = 0;
     this.entities = [];
+    this.uiElements = [];
     this.tileLookup = null;
     this.currentsLookup = null;
-    this.physicsWorld = new PhysicsWorld({
-      getTile: this.getTile.bind(this),
-      restitution: 0.2,
-      friction: 0.1
-    });
-    this.physicsSolver = new PhysicsSolver(this.physicsWorld, {
-      integrator: 'verlet',
-      springIterations: 1,
-      useMemoryTethers: true,
-      gravity: { x: 0, y: 0.15 }
-    });
+    this.physicsWorld = null;
+    this.physicsSolver = null;
   }
 
   init() {
@@ -33,8 +28,21 @@ export class BaseScene {
     const player = this.p.shared.player;
     this.padding = this.calculatePadding();
     if (this.levelData) {
+      this.physicsWorld = new PhysicsWorld({
+        getTile: this.getTile.bind(this),
+        restitution: 0.2,
+        friction: 0.1
+      });
+
+      this.physicsSolver = new PhysicsSolver(this.physicsWorld, {
+        integrator: 'verlet',
+        springIterations: 1,
+        useMemoryTethers: true,
+        gravity: { x: 0, y: 0.15 }
+      });
       this.computeMapTransform(this.levelData, { paddingPx: this.padding });
       player.setScene(this);
+      this.levelData = generateCurrents(this.levelData, this.p);
       const spawnWorld = {
         x: this.levelData.spawn.x + 0.5,
         y: this.levelData.spawn.y + 0.5
@@ -54,7 +62,29 @@ export class BaseScene {
     const r = this.p.shared.renderer;
     r.reset();
     this.registerEntity(player);
+    console.log('reset renderer layers width:');
+    console.log(this.renderer.layers.uiLayer.width);
     return [r, player];
+  }
+
+  addLevelButtons() {
+    // Main Menu Button
+    const dim = 0.02 * this.renderer.layers.uiLayer.width;
+    const btn = new MyButton(
+      this.renderer.layers.uiLayer.width - dim - this.padding, // x (with 10px padding)
+      this.padding,                     // y
+      dim,                     // width
+      dim,                     // height
+      "X",
+      this.renderer.layers.uiLayer,
+      () => {                 // onClick action
+        this.p.shared.sceneManager.change("menu");
+      }
+    );
+    console.log('Registering pause button UI element:', btn);
+
+    this.registerUI(btn);
+
   }
 
   update() {
@@ -62,7 +92,6 @@ export class BaseScene {
     const player = this.p.shared.player;
     const dt = this.p.shared.timing.delta;
 
-    this.sceneFrameCount++;
     this.recentlyLaunchedScene = isNaN(this.sceneFrameCount) || this.sceneFrameCount < 10;
 
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
@@ -76,8 +105,24 @@ export class BaseScene {
           const cy = Math.floor(p.pos.y);
           const current = this.getCurrent(cx, cy);
           if (current) {
-            entity.onCurrent(p, current); 
-            // p.addForce(current.dx, current.dy);
+            const t = this.p.millis() * 0.001;
+            const amp = 0.2;
+            const tilePhase = (x, y) => {
+              return ((x * 12.9898 + y * 78.233) * 43758.5453) % (2 * Math.PI);
+            };
+
+            let dx = current.dx;
+            let dy = current.dy;
+
+            if (!current.levelDefinitionCurrent) {
+              const phase = tilePhase(cx, cy);
+              const wobbleX = 1 + amp * Math.sin(t + phase);
+              const wobbleY = 1 + amp * Math.cos(t + phase);
+              dx = current.dx * wobbleX;
+              dy = current.dy * wobbleY;
+            }
+
+            entity.onCurrent(p, { ...current, dx, dy });
           }
         }
       }
@@ -100,6 +145,10 @@ export class BaseScene {
     }
 
     return [r, player, dt];
+  }
+
+  registerUI(element) {
+    this.uiElements.push(element);
   }
 
   registerEntity(entity) {
@@ -151,14 +200,43 @@ export class BaseScene {
     }
   }
 
+  onMousePressed(x, y) {
+    // above was an attempt at converting to internal coords, fails on portrait, also think it shouldnt live here - should live in renderer
+    let [internalX, internalY] = this.renderer.toLayerCoords('uiLayer', x, y);
 
+    console.log('BaseScene onMousePressed at:', x, y, '-> internal:', internalX, internalY);
+    for (const el of this.uiElements) {
+      if (el.mousePressed?.(internalX, internalY)) return;   // allow UI to consume the click
+    }
+  }
 
   draw() {
-    // default noop
+    this.sceneFrameCount++;
+    if (this.renderer.layerDirty.uiLayer) {
+      const uiLayer = this.renderer.layers.uiLayer;
+      for (const el of this.uiElements) {
+        el.draw(uiLayer);
+        // console.log('Drawing UI element:', el);
+      }
+    }
   }
 
   cleanup() {
     this.Debug.log('level', `🧹 ${this.constructor.name} cleanup`);
+    this.sceneFrameCount = 0;
+    this.recentlyLaunchedScene = true;
+    this.recentlyChangedScene = true;
+    this.lastSceneChangeFrameNumber = 0;
+    for (const entity of this.entities) {
+      entity.cleanup();
+    }
+    this.entities.length = 0;
+    this.uiElements.length = 0;
+    this.tileLookup = null;
+    this.currentsLookup = null;
+    this.physicsWorld = null;
+    this.physicsSolver = null;
+    this.levelData = null;
   }
 
   // ---- Helpers -------------------------------------------------
@@ -194,12 +272,15 @@ export class BaseScene {
     this.lastSceneChangeFrameNumber = this.sceneFrameCount;
     this.padding = this.calculatePadding();
     if (this.levelData) this.computeMapTransform(this.levelData, { paddingPx: this.padding });
+    for (const el of this.uiElements) {
+      el.onResize?.(this.renderer.layers.uiLayer);
+    }
   }
 
   onActionStart(action) {
     const player = this.p.shared.player;
     player?.onActionStart?.(action);
-    if (action === "pause") this.p.shared.sceneManager.change("menu");
+    // if (action === "pause") this.p.shared.sceneManager.change("menu");
   }
 
   onActionEnd(action) {
@@ -214,6 +295,8 @@ export class BaseScene {
     const scale = this.p.shared.settings?.paddingRatio ?? 1;
 
     const paddingPx = Math.floor(Math.min(W, H) * scale);
+    // const paddingPx = H * scale;
+
     this.Debug.log('level', `Calculated padding: ${paddingPx}px (scale: ${scale})`);
     return paddingPx;
   }

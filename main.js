@@ -18,12 +18,15 @@ import { Player } from './entities/player.js';
 
 export const mainSketch = (p) => {
   p.shared = {};
+  p.shared.assets = {};
 
   p.preload = () => {
-    // Load any built-in or custom font to satisfy WebGL text
-    p.shared.mainFont = p.loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf');
+    // p.shared.mainFont = p.loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf');
+    p.shared.mainFont = p.loadFont('./assets/found/Patrick_Hand/PatrickHand-Regular.ttf');
+    // p.shared.mainFont = p.loadFont('./assets/found/Comic_Neue/ComicNeue-Regular.ttf');
     p.shared.levels = p.loadJSON('./config/levels.json');
     p.shared.chroma = p.loadJSON('./config/chroma.json');
+    p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
   };
 
   p.setup = async () => {

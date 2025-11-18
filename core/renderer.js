@@ -46,7 +46,7 @@ export async function createRenderer(p) {
     activeShader: null,
     activePostShader: 'default',
     layerDirty: {},
-    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer'], // 'uiLayer' excluded from main layers
+    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer'],
     _pendingShaders: {},
     _shaderCache: new Map(),
     frameCount: 0,
@@ -59,17 +59,12 @@ export async function createRenderer(p) {
       this.base = p.createGraphics(p.width, p.height, p.WEBGL);
       this.base.noStroke();
       this.layerNames.forEach(layerName => {
-        this.layers[layerName] = p.createGraphics(p.width / p.shared.settings.graphicsScaling, p.height / p.shared.settings.graphicsScaling);
+        this.layers[layerName] = p.createGraphics(Math.floor(p.width / p.shared.settings.graphicsScaling), Math.floor(p.height / p.shared.settings.graphicsScaling));
         this.layerDirty[layerName] = true;
         this.layers[layerName].textFont(p.shared.mainFont);
         this.layers[layerName].textAlign(p.CENTER, p.CENTER);
         this.layers[layerName].textSize(this.layers[layerName].width / 40);
       });
-      this.layers['uiLayer'] = p.createGraphics(p.width, p.height);
-      this.layerDirty['uiLayer'] = true;
-      this.layers['uiLayer'].textFont(p.shared.mainFont);
-      this.layers['uiLayer'].textAlign(p.CENTER, p.CENTER);
-      this.layers['uiLayer'].textSize(this.layers['uiLayer'].width / 40);
 
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
       await this.loadShader('chroma', './shaders/chroma.vert', './shaders/chroma.frag');
@@ -144,7 +139,7 @@ export async function createRenderer(p) {
         if (this.layerDirty[name]) {
           layer.clear();
           layer.noStroke();
-          this.Debug.log('renderer', `🖌️ Redrawing layer: "${name}"`);
+          // this.Debug.log('renderer', `🖌️ Redrawing layer: "${name}"`);
           if (layer._renderer?.GL) {
             layer.drawingContext.disable(layer.drawingContext.DEPTH_TEST);
           }
@@ -169,7 +164,7 @@ export async function createRenderer(p) {
         this.layerDirty[name] = false;
       }
 
-      this.Debug.log('renderer', `Compositing layers onto main canvas at frame ${this.frameCount} - ${p.frameCount}`);
+      // this.Debug.log('renderer', `Compositing layers onto main canvas at frame ${this.frameCount} - ${p.frameCount}`);
       // Composite onto main canvas
 
       // this.base.clear();
@@ -205,11 +200,11 @@ export async function createRenderer(p) {
       this.base.resizeCanvas(w, h);
       const scaling = p.shared.settings.graphicsScaling
       Object.entries(this.layers).forEach(([name, layer]) => {
-        layer.resizeCanvas(w / scaling, h / scaling);
+        layer.resizeCanvas(Math.floor(w / scaling), Math.floor(h / scaling));
 
 
         this.layerDirty[name] = true; // mark dirty after resize
-        this.Debug.log('renderer', `🔄 Resized layer "${name}" to (${w / scaling}, ${h / scaling})`);
+        this.Debug.log('renderer', `🔄 Resized layer "${name}" to (${Math.floor(w / scaling)}, ${Math.floor(h / scaling)})`);
       });
     },
 
@@ -226,6 +221,7 @@ export async function createRenderer(p) {
       // this.updateUniforms(p);
       this.frameCount = 0;
       this.Debug.log('renderer', '🔄 Renderer reset, frame counter cleared');
+      this.Debug.log('renderer', 'Base Dims:', p.width, p.height, 'Layer Dims:', this.layers.entitiesLayer.width, this.layers.entitiesLayer.height);
     },
 
     use(shaderName = 'default') {
@@ -295,6 +291,38 @@ export async function createRenderer(p) {
         this.Debug.log('renderer', '[WARN]', `💥 Failed to create shader "${shaderName}" for context`, err);
         return null;
       }
+    },
+
+    toLayerCoords(layerName, globalX, globalY) {
+      const layer = this.layers[layerName];
+      if (!layer) {
+        this.Debug.log('renderer', '[WARN]', `⚠️ Unknown layer "${layerName}" passed to toLayerCoords.`);
+        return [globalX, globalY];
+      }
+
+      const scaling = p.shared.settings.graphicsScaling || 1;
+
+      // 1. Undo the graphics scaling (screen → internal canvas space)
+      let x1 = globalX / scaling;
+      let y1 = globalY / scaling;
+
+      // 2. Undo portrait rotation if active
+      // (System sets p.shared.isPortrait during resize)
+      if (p.shared.isPortrait) {
+        const oldX = x1;
+        const oldY = y1;
+
+        // canvas was rotated 90° clockwise visually,
+        // so invert by rotating 90° counter-clockwise
+        x1 = oldY;
+        y1 = layer.height - oldX;
+      }
+
+      // 3. Clamp to layer bounds for safety
+      x1 = Math.max(0, Math.min(layer.width, x1));
+      y1 = Math.max(0, Math.min(layer.height, y1));
+
+      return [x1, y1];
     }
 
   };
@@ -303,3 +331,4 @@ export async function createRenderer(p) {
   p.shared.renderer = renderer;
   return renderer;
 }
+
