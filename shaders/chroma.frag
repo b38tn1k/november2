@@ -415,11 +415,11 @@ void main() {
                isAmbient);
 
   // Player outline
-  if (!isPlayer && isPlayerEdge(uv)) {
-    isSnapped = false;
-    gl_FragColor = renderPlayerOutline();
-    // return;
-  }
+  // if (!isPlayer && isPlayerEdge(uv)) {
+  //   isSnapped = false;
+  //   gl_FragColor = renderPlayerOutline();
+  //   // return;
+  // }
 
   // Player fill
   if (isPlayer) {

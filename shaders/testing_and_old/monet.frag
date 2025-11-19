@@ -41,7 +41,7 @@ void main() {
     col /= 25.0;
 
     // --- Posterization (fewer tones = chunkier regions) ---
-    col.rgb = floor(col.rgb * 6.0) / 6.0;
+    // col.rgb = floor(col.rgb * 6.0) / 6.0;
 
     // --- Subtle hue jitter for variation ---
     float hueShift = (rand(uv * 30.0) - 0.5) * 0.1;

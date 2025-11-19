@@ -7,9 +7,9 @@ export function createSceneManager(p) {
     current: null,
     Debug: p.shared.Debug,
 
-    register(name, SceneClass) {
+    register(name, SceneClass, options = {}) {
       // Instantiate the scene class with p
-      this.scenes[name] = new SceneClass(p);
+      this.scenes[name] = new SceneClass(p, options);
     },
 
     onResize(w, h) {

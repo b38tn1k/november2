@@ -67,7 +67,9 @@ export class BaseScene {
   }
 
   drawCurrentsUniformTexture() {
-    const layer = this.renderer.layers.currentTexture;
+    const targetLayer = this.renderer.layers.currentTexture;
+    const downscale = 0.02;
+    const layer = this.p.createGraphics(Math.round(targetLayer.width*downscale), Math.round(targetLayer.height*downscale));
     const minDX = this.levelData.currentExtrema.minDX;
     const maxDX = this.levelData.currentExtrema.maxDX;
     const minDY = this.levelData.currentExtrema.minDY;
@@ -80,15 +82,20 @@ export class BaseScene {
         const tileSize = this.mapTransform.tileSizePx;
         const r = Math.floor(this.p.map(c.dx, minDX, maxDX, 0, 255));
         const g = Math.floor(this.p.map(c.dy, minDY, maxDY, 0, 255));
-        const b = 128; // neutral
+        const b = 0; // neutral
         layer.noStroke();
         layer.fill(r, g, b);
-        layer.rect(screenPos.x, screenPos.y, tileSize, tileSize);
+        layer.rect(screenPos.x*downscale, screenPos.y*downscale, tileSize*downscale, tileSize*downscale);
       }
     }
+    targetLayer.imageMode(this.p.CORNER);
+    targetLayer.smooth();
+    targetLayer.elt.getContext('2d').imageSmoothingEnabled = true;
+    targetLayer.image(layer, 0, 0, targetLayer.width, targetLayer.height);
+    layer.remove();
   }
 
-  addLevelButtons() {
+  addInGameMenuButtons() {
     // Main Menu Button
     const dim = 0.02 * this.renderer.layers.uiLayer.width;
     const btn = new MyButton(
@@ -151,17 +158,21 @@ export class BaseScene {
     // 2. gather root particles (for example, each entity exposes mainPhysicsParticle)
     const roots = [];
     for (const entity of this.entities) {
-      if (entity.mainPhysicsParticle) {
+      if (entity.mainPhysicsParticle && entity.active) {
         roots.push(entity.mainPhysicsParticle);
       }
     }
 
     // 3. step the physics
-    this.physicsSolver.step(dt, roots);
+    if (roots.length > 0) {
+      this.physicsSolver.step(dt, roots);
+    }
 
     // 4. post-physics entity updates
     for (const entity of this.entities) {
-      entity.postPhysics(dt);
+      if (entity.active) {
+        entity.postPhysics(dt);
+      }
     }
 
     return [r, player, dt];

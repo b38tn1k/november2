@@ -2,14 +2,15 @@ import { BaseScene } from '../core/BaseScene.js';
 import { Plankton } from '../entities/plankton.js';
 
 export class Level1Scene extends BaseScene {
-    constructor(p) {
+    constructor(p, opts) {
         super(p);
         this.p = p;
+        this.level = opts.level;
     }
 
     init() {
-        const level = this.p.shared.levels.level1;
-        this.levelData = this.p.shared.parseLevel(level, this.p);
+        // const level = this.p.shared.levels.level2;
+        this.levelData = this.p.shared.parseLevel(this.level, this.p);
         const [r, player] = super.init();
 
         for (let i = 0; i < 30; i++) {
@@ -17,14 +18,7 @@ export class Level1Scene extends BaseScene {
             this.registerEntity(plankton);
         }
 
-        this.addLevelButtons();
-    }
-
-    onKeyPressed(key, keyCode) {
-        super.onKeyPressed(key, keyCode);
-        // if (this.p.keyIsPressed && this.p.key === 'l') {
-        //     this.p.shared.sceneManager.change('gameover');
-        // }
+        this.addInGameMenuButtons();
     }
 
     update() {
@@ -43,7 +37,6 @@ export class Level1Scene extends BaseScene {
         const player = this.p.shared.player;
         const layers = r.layers;
         
-        // r.use('chroma');
         r.drawScene(() => {
             if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
                 // this.drawTerrainBlocking(layers.worldLayer);

@@ -10,6 +10,7 @@ import { Settings } from './config/settings.js';
 import { parseLevel } from './core/parseLevel.js';
 
 import { MenuScene } from './scenes/menu.js';
+import { ChapterScene } from './scenes/chapter.js';
 import { Level1Scene } from './scenes/level1.js';
 import { GameOverScene } from './scenes/gameover.js';
 
@@ -66,10 +67,17 @@ export const mainSketch = (p) => {
 
     registerSystemEvents(p);
     registerControls(p);
-
+``
     // Register scenes
+    // this.p.shared.levels.level2;
     p.shared.sceneManager.register('menu', MenuScene);
-    p.shared.sceneManager.register('level1', Level1Scene);
+    p.shared.sceneManager.register('chapter1', ChapterScene, {levels: [1, 2]});
+    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [3, 4]});
+    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [5, 6]});
+    p.shared.sceneManager.register('chapter4', ChapterScene, {levels: [7, 8]});
+
+    p.shared.sceneManager.register('level1', Level1Scene, { level: p.shared.levels.level1 });
+    p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2 });
     p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
     p.shared.sceneManager.change('menu');
 

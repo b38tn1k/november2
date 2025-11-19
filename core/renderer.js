@@ -89,8 +89,9 @@ export async function createRenderer(p) {
         this.layers[layerName].elt.getContext('2d').imageSmoothingEnabled = false;
       });
 
-      await this.loadShader('default', './shaders/testing_and_old/monet.vert', './shaders/testing_and_old/monet.frag');
-      // await this.loadShader('default', './shaders/post.vert', './shaders/post.frag');
+      // await this.loadShader('default', './shaders/testing_and_old/monet.vert', './shaders/testing_and_old/monet.frag');
+      // await this.loadShader('default', './shaders/testing_and_old/nes.vert', './shaders/testing_and_old/nes.frag');
+      await this.loadShader('default', './shaders/post.vert', './shaders/post.frag');
       await this.loadShader('chroma', './shaders/chroma.vert', './shaders/chroma.frag');
 
     },

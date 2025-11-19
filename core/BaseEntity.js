@@ -11,6 +11,7 @@ export class BaseEntity {
     this.mainPhysicsParticle = null;
     this.physicsParticles = []; // kept only for rendering order; solver walks child graph
     this.baseBuoyancy = 0;      // default buoyancy for floating entities
+    this.active = true;
   }
 
   createPhysicsParticle(x, y, mass = 1, main = false, fixed = false) {
@@ -48,6 +49,8 @@ export class BaseEntity {
   }
 
   reset(spawn = { x: 0, y: 0 }) {
+    this.visible = true;
+    this.active = true;
     this.worldPos.x = spawn.x;
     this.worldPos.y = spawn.y;
     this.visible = true;
@@ -101,5 +104,11 @@ export class BaseEntity {
 
   deactivate() {
     this.visible = false;
+    this.active = false;
+  }
+
+  activate() {
+    this.visible = true;
+    this.active = true;
   }
 }
