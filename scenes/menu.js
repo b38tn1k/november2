@@ -113,10 +113,10 @@ export class MenuScene extends BaseScene {
         });
     }
 
-    // onKeyPressed(key, keyCode) {
-    //     super.onKeyPressed(key, keyCode);
-    //     this.p.shared.sceneManager.change('level1');
-    // }
+    onKeyPressed(key, keyCode) {
+        super.onKeyPressed(key, keyCode);
+        this.p.shared.sceneManager.change('level3');
+    }
 
     update() {
         const r = this.renderer;

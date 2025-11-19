@@ -43,7 +43,7 @@ export class Plankton extends BaseEntity {
         this.generateArt();
     }
 
-    initAmbientEntity() {
+    initAmbientGeneratedEntity() {
         if (!this.scene || !this.scene.levelData) return;
 
         const { cols, rows } = this.scene.levelData;
@@ -87,16 +87,6 @@ export class Plankton extends BaseEntity {
             this.art.remove();
             this.art = null;
         }
-    }
-
-    onActionStart(action) {
-        if (this.moving[action] !== undefined) this.moving[action] = true;
-        this.Debug?.log('player', `Started ${action}`);
-    }
-
-    onActionEnd(action) {
-        if (this.moving[action] !== undefined) this.moving[action] = false;
-        this.Debug?.log('player', `Ended ${action}`);
     }
 
     applyPerlinFlow(mp, dt) {

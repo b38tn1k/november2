@@ -93,17 +93,25 @@ vec4 snapChroma(vec4 maskColor) {
   return snapped;
 }
 
-void classifyMask(vec4 snapped, out bool isTerrain, out bool isBackground,
-                  out bool isCurrents, out bool isPlayer, out bool isEnemy,
-                  out bool isAmbient) {
-  float eps = 0.05;
+void classifyMask(vec4 snapped,
+                  out bool isTerrain,
+                  out bool isBackground,
+                  out bool isCurrent,
+                  out bool isPlayer,
+                  out bool isEnemy,
+                  out bool isAmbient,
+                  out bool isVegetation,
+                  out bool isStaticVegetation) {
+  float eps = 0.01;
 
   isTerrain = distance(snapped.rgb, uChromaTerrain.rgb) < eps;
   isBackground = distance(snapped.rgb, uChromaBackground.rgb) < eps;
-  isCurrents = distance(snapped.rgb, uChromaCurrent.rgb) < eps;
+  isCurrent = distance(snapped.rgb, uChromaCurrent.rgb) < eps;
   isPlayer = distance(snapped.rgb, uChromaPlayer.rgb) < eps;
   isEnemy = distance(snapped.rgb, uChromaEnemy.rgb) < eps;
   isAmbient = distance(snapped.rgb, uChromaAmbient.rgb) < eps;
+  isVegetation = distance(snapped.rgb, uChromaVegetation.rgb) < eps;
+  isStaticVegetation = distance(snapped.rgb, uChromaStaticVegetation.rgb) < eps;
 }
 
 // --------------------------------------------------------
@@ -404,15 +412,26 @@ void main() {
   vec4 snapped = snapChroma(maskColor);
 
   // Classify
-  bool isTerrain;
-  bool isBackground;
-  bool isCurrents;
   bool isPlayer;
-  bool isEnemy;
+  bool isTerrain;
+  bool isVegetation;
+  bool isStaticVegetation;
+  bool isCurrent;
+  bool isBackground;
   bool isAmbient;
+  bool isEnemy;  
+  
+  classifyMask(snapped,
+               isTerrain,
+               isBackground,
+               isCurrent,
+               isPlayer,
+               isEnemy,
+               isAmbient,
+               isVegetation,
+               isStaticVegetation);
+  
   bool isSnapped = true;
-  classifyMask(snapped, isTerrain, isBackground, isCurrents, isPlayer, isEnemy,
-               isAmbient);
 
   // Player outline
   // if (!isPlayer && isPlayerEdge(uv)) {
@@ -446,6 +465,12 @@ void main() {
   if (isTerrain) {
     isSnapped = false;
     gl_FragColor = renderTerrain(uv);
+    // return;
+  }
+
+  if (isVegetation || isStaticVegetation) {
+    isSnapped = false;
+    gl_FragColor = renderPlayerStarfish(uv);
     // return;
   }
 
