@@ -12,6 +12,7 @@ export class BaseEntity {
     this.physicsParticles = []; // kept only for rendering order; solver walks child graph
     this.baseBuoyancy = 0;      // default buoyancy for floating entities
     this.active = true;
+    this.useMemoryTethers = true;
   }
 
   createPhysicsParticle(x, y, mass = 1, main = false, fixed = false) {

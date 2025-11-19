@@ -4,7 +4,8 @@ export class PhysicsParticle {
         this.prevPos = { x, y };          // prepare for Verlet
         this.vel = { x: 0, y: 0 };
         this.force = { x: 0, y: 0 };
-
+        this.softFactor = 0.08;
+        this.useMemoryTether = true;
         this.mass = mass;
         this.invMass = fixed ? 0 : 1 / mass;
         this.fixed = fixed;
@@ -160,14 +161,38 @@ export class PhysicsParticle {
         const fy = (forceMag + dampingForce) * ny;
 
         // apply to both ends
-        this.addForce(+fx, +fy);
-        child.addForce(-fx, -fy);
+        // this.addForce(+fx, +fy);
+        // child.addForce(-fx, -fy);
+        if (this.invMass === 0) {
+            // only push/pull the child
+            child.addForce(-fx, -fy);
+        } else {
+            this.addForce(+fx, +fy);
+            child.addForce(-fx, -fy);
+        }
+
+        // // -------------------------------------------------------
+        // // POSITIONAL CORRECTION (symmetric), skip if parent fixed
+        // // -------------------------------------------------------
+        // const percent = 0.5;  // half to each end for symmetric correction
+        // const correction = diff * percent;
+
+        // // move child
+        // child.pos.x -= nx * correction;
+        // child.pos.y -= ny * correction;
+
+        // // move parent unless fixed
+        // if (this.invMass !== 0) {
+        //     this.pos.x += nx * correction;
+        //     this.pos.y += ny * correction;
+        // }
     }
 
     /** -------------------------------------------------------
      *  MEMORY TETHER (soft positional correction)
      * ------------------------------------------------------*/
     solveMemory(child, dt) {
+        // if (!child.useMemoryTether) return;
         const targetX = this.pos.x + child.offsets.x;
         const targetY = this.pos.y + child.offsets.y;
 
@@ -178,7 +203,7 @@ export class PhysicsParticle {
         const rest = child.restLength;
 
         // HARD constraint if child strays too far from its intended anchor
-        const hardLimit = 1.25;
+        const hardLimit = 3.0;
         if (dist > rest * hardLimit) {
             const overshoot = dist - rest;
             const correction = overshoot / dist;
@@ -190,7 +215,7 @@ export class PhysicsParticle {
         }
 
         // SOFT tether: gentle positional slide toward target
-        const softFactor = 0.1;
+        const softFactor = child.softFactor;
         child.pos.x += dx * softFactor;
         child.pos.y += dy * softFactor;
     }

@@ -78,6 +78,7 @@ export const mainSketch = (p) => {
 
     p.shared.sceneManager.register('level1', Level1Scene, { level: p.shared.levels.level1 });
     p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2 });
+    p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3 });
     p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
     p.shared.sceneManager.change('menu');
 

@@ -4,6 +4,7 @@ import { GeometryTools } from './geometryTools.js';
 import { SceneDrawingMixin } from './SceneDrawingMixin.js';
 import { generateCurrents } from './generateCurrents.js';
 import { MyButton } from '../components/myButton.js';
+import { Grass } from '../entities/grass.js';
 
 export class BaseScene {
   constructor(p) {
@@ -58,6 +59,17 @@ export class BaseScene {
       for (const c of this.levelData.currents) {
         const key = `${c.x},${c.y}`;
         this.currentsLookup.set(key, c);
+      }
+
+      for (const entity of this.levelData.entities) {
+        console.log(entity);
+        switch (entity.type) {
+          case 'grass':
+            const grass = new Grass(this.p, entity);
+            this.registerEntity(grass);
+            break;
+          // add more entity types here
+        }
       }
     }
     const r = this.p.shared.renderer;
@@ -126,10 +138,10 @@ export class BaseScene {
     // 1. apply entity forces
     for (const entity of this.entities) {
       entity.applyForces(dt);
-      for (const p of entity.physicsParticles) {
-        if (p) {
-          const cx = Math.floor(p.pos.x);
-          const cy = Math.floor(p.pos.y);
+      for (const prt of entity.physicsParticles) {
+        if (prt) {
+          const cx = Math.floor(prt.pos.x);
+          const cy = Math.floor(prt.pos.y);
           const current = this.getCurrent(cx, cy);
           if (current) {
             const t = this.p.millis() * 0.001;
@@ -149,7 +161,7 @@ export class BaseScene {
               dy = current.dy * wobbleY;
             }
 
-            entity.onCurrent(p, { ...current, dx, dy });
+            entity.onCurrent(prt, { ...current, dx, dy });
           }
         }
       }
@@ -185,8 +197,8 @@ export class BaseScene {
   registerEntity(entity) {
     this.entities.push(entity);
     entity.setScene(this);
-    if (typeof entity.initAmbientEntity === "function") {
-      entity.initAmbientEntity();
+    if (typeof entity.initAmbientGeneratedEntity === "function") {
+      entity.initAmbientGeneratedEntity();
     }
   }
 

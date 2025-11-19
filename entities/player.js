@@ -4,8 +4,10 @@ const ROOT_RADIUS = 0.15;
 const STEM_SEG_LENGTH = 0.40;
 const FROND_SPREAD = 0.32;
 const FROND_HEIGHT = 0.38;
+
 const SPRING_K = 1.2;
 const SPRING_DAMP = 0.99;
+
 const FROND_MASS = 1;
 const STEM_MASS = 4;
 const ROOT_MASS = 12;
@@ -20,7 +22,8 @@ export class Player extends BaseEntity {
         this.speed = 40;
         this.speed = p.shared.settings.playerSpeed || 40;
         this.sinkancy = p.shared.settings.playerSinkancy || 30;
-        this.baseBuoyancy = p.shared.settings.playerBuoyancy || -10;
+        this.buoyancy = p.shared.settings.playerBuoyancy || -12.5;
+        this.baseBuoyancy = p.shared.settings.playerBuoyancy || -12.5;
 
         this.moving = {
             moveLeft: false,
@@ -117,6 +120,11 @@ export class Player extends BaseEntity {
     }
 
     applyForces(dt) {
+        if (this.moving.sink) {
+            this.baseBuoyancy = this.sinkancy;
+        } else {
+            this.baseBuoyancy = this.buoyancy;
+        }
         super.applyForces(dt);
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
@@ -126,7 +134,7 @@ export class Player extends BaseEntity {
         if (this.moving.moveRight) mp.addForce(+this.speed, 0);
 
         // Vertical control
-        if (this.moving.sink) mp.addForce(0, this.sinkancy);
+        // if (this.moving.sink) mp.addForce(0, this.sinkancy);
     }
 
     postPhysics() {
@@ -142,9 +150,9 @@ export class Player extends BaseEntity {
         if (!this.visible || !this.scene) return;
         const { x, y } = this.scene.worldToScreen(this.worldPos);
 
-        layer.noFill();
         // const chroma = this.p.shared.chroma;
         // const pc = chroma.player;
+        layer.noFill();
         layer.stroke(this.p.shared.chroma.player);
         layer.strokeWeight(this.p.shared.settings.playerStrokeWeight * layer.width || 8);
 
