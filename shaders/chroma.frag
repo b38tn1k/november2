@@ -55,6 +55,54 @@ float fbm(vec2 p) {
   return value;
 }
 
+float voronoi(vec2 x) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = vec2(hash(n + g), hash(n + g + 1.23));
+      vec2 r = g + o - f;
+      float d = dot(r, r);
+      md = min(md, d);
+    }
+  }
+  return sqrt(md);
+}
+
+vec3 hsv2rgb(vec3 c) {
+  vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0,
+                   0.0, 1.0);
+  rgb = rgb * rgb * (3.0 - 2.0 * rgb); // smootherstep for softer transitions
+  return c.z * mix(vec3(1.0), rgb, c.y);
+}
+
+vec3 rgb2hsv(vec3 c) {
+  float maxC = max(c.r, max(c.g, c.b));
+  float minC = min(c.r, min(c.g, c.b));
+  float delta = maxC - minC;
+
+  float h = 0.0;
+  if (delta > 0.00001) {
+    if (maxC == c.r) {
+      h = (c.g - c.b) / delta;
+    } else if (maxC == c.g) {
+      h = 2.0 + (c.b - c.r) / delta;
+    } else {
+      h = 4.0 + (c.r - c.g) / delta;
+    }
+    h /= 6.0;
+    if (h < 0.0)
+      h += 1.0;
+  }
+
+  float s = maxC <= 0.0 ? 0.0 : (delta / maxC);
+  float v = maxC;
+
+  return vec3(h, s, v);
+}
+
 // --------------------------------------------------------
 // Chroma snapping and classification
 // --------------------------------------------------------
@@ -93,14 +141,9 @@ vec4 snapChroma(vec4 maskColor) {
   return snapped;
 }
 
-void classifyMask(vec4 snapped,
-                  out bool isTerrain,
-                  out bool isBackground,
-                  out bool isCurrent,
-                  out bool isPlayer,
-                  out bool isEnemy,
-                  out bool isAmbient,
-                  out bool isVegetation,
+void classifyMask(vec4 snapped, out bool isTerrain, out bool isBackground,
+                  out bool isCurrent, out bool isPlayer, out bool isEnemy,
+                  out bool isAmbient, out bool isVegetation,
                   out bool isStaticVegetation) {
   float eps = 0.01;
 
@@ -179,74 +222,105 @@ vec4 renderPlayerStarfish(vec2 uv) {
   return vec4(starfishColor, 1.0);
 }
 
+vec3 blur9(sampler2D tex, vec2 uv, float px) {
+  vec3 sum = vec3(0.0);
+
+  sum += texture2D(tex, uv + vec2(-px, -px)).rgb * 1.0;
+  sum += texture2D(tex, uv + vec2(0.0, -px)).rgb * 2.0;
+  sum += texture2D(tex, uv + vec2(px, -px)).rgb * 1.0;
+
+  sum += texture2D(tex, uv + vec2(-px, 0.0)).rgb * 2.0;
+  sum += texture2D(tex, uv).rgb * 4.0;
+  sum += texture2D(tex, uv + vec2(px, 0.0)).rgb * 2.0;
+
+  sum += texture2D(tex, uv + vec2(-px, px)).rgb * 1.0;
+  sum += texture2D(tex, uv + vec2(0.0, px)).rgb * 2.0;
+  sum += texture2D(tex, uv + vec2(px, px)).rgb * 1.0;
+
+  return sum / 16.0;
+}
+
 // --------------------------------------------------------
-// Ambient plankton shader  atlas textured organisms
+// Ambient shader atlas textured organisms
 // --------------------------------------------------------
-vec4 renderAmbientPlankton(vec2 uv) {
+vec4 renderAmbientLayer(vec2 uv) {
+  // Mask provides only color family, not structure
+  vec3 maskColor = texture2D(ambientTexture, uv).rgb;
+  vec3 baseHsv = rgb2hsv(maskColor);
+  float hueSeed = baseHsv.x;
+
   vec2 p = uv;
 
-  // 1. Sample sprite from ambient texture atlas
-  vec4 sprite = texture2D(ambientTexture, uv);
+  // Multi scale Voronoi for cell boundaries
+  float v1 =
+      voronoi(p * 420.0 + vec2(uTime * 0.53, -uTime * 0.72)); // large cells
+  float v2 =
+      voronoi(p * 900.0 + vec2(uTime * 0.13, -uTime * 0.22)); // medium cells
+  float v3 = voronoi(p * 1520.0 +
+                     vec2(uTime * 0.13, -uTime * 0.22)); // animated micro cells
 
-  // If this pixel is not part of a sprite, discard.
-  if (sprite.a < 0.01) {
-    discard;
-  }
+  // Convert Voronoi distances into bright vein edges
+  float veinsCoarse = 1.0 - smoothstep(0.14, 0.26, v1);
+  float veinsMedium = 1.0 - smoothstep(0.06, 0.16, v2);
+  float veinsFine = 1.0 - smoothstep(0.03, 0.09, v3);
 
-  vec3 col = sprite.rgb;
+  // Dendritic fbm pattern to break symmetry and give branching
+  float dendritic = fbm(p * 9.0 + vec2(uTime * 0.05, uTime * 0.02));
+  dendritic = smoothstep(0.52, 0.75, dendritic);
 
-  // 2. Subtle UV wobble  micro swimming motion
-  float wobbleX = sin(uTime * 1.3 + p.y * 12.0) * 0.004;
-  float wobbleY = cos(uTime * 1.7 + p.x * 10.0) * 0.004;
-  vec2 wobUv = uv + vec2(wobbleX, wobbleY);
+  // Final vein mask, clamped to [0,1]
+  float veins =
+      clamp(veinsCoarse + 0.6 * veinsMedium + 0.4 * veinsFine + 0.9 * dendritic,
+            0.0, 1.0);
 
-  col = texture2D(ambientTexture, wobUv).rgb;
+  // Membrane interior  softer fill inside cells
+  float membrane = smoothstep(0.18, 0.75, v1);
 
-  // 3. Slow hue drift  organic color breathing
-  float t = uTime * 0.15;
-  float angle = sin(t + uv.x * 3.0) * 0.25;
+  // Slow pigment blotches to avoid flat regions
+  float blotch = fbm(p * 3.0 + vec2(uTime * 0.03, -uTime * 0.02));
 
-  float s = sin(angle);
-  float c = cos(angle);
-  mat3 hue =
-      mat3(vec3(0.299 + 0.701 * c + 0.168 * s, 0.587 - 0.587 * c + 0.330 * s,
-                0.114 - 0.114 * c - 0.497 * s),
-           vec3(0.299 - 0.299 * c - 0.328 * s, 0.587 + 0.413 * c + 0.035 * s,
-                0.114 - 0.114 * c + 0.292 * s),
-           vec3(0.299 - 0.300 * c + 1.250 * s, 0.587 - 0.588 * c - 1.050 * s,
-                0.114 + 0.886 * c - 0.203 * s));
+  // High frequency micro noise for tiny texture
+  float micro = noise(p * 180.0 + uTime * 0.2);
+  float grain = noise(p * 260.0);
 
-  col = hue * col;
+  // Hue is driven by mask plus structural variation
+  float h = hueSeed;
+  h += veins * 0.08;  // veins shift hue slightly
+  h -= blotch * 0.05; // blotches pull hue back
+  h = fract(h);
 
-  // 4. Reef tinting
-  vec3 reefTint1 = vec3(0.10, 0.65, 0.75);
-  vec3 reefTint2 = vec3(0.95, 0.45, 0.65);
-  vec3 reefTint3 = vec3(0.60, 0.85, 0.50);
+  // Saturation drifts toward richer colors
+  float s = mix(baseHsv.y, 0.9, 0.7);
 
-  float sel = noise(uv * 20.0);
-  vec3 targetTint = sel < 0.33 ? reefTint1 : sel < 0.66 ? reefTint2 : reefTint3;
+  // Value is brighter along membranes and slightly modulated by blotches
+  float v = 0.70 + membrane * 0.25 + blotch * 0.05;
 
-  col = mix(col, targetTint, 0.12);
+  vec3 col = hsv2rgb(vec3(h, s, v));
 
-  // 5. Bioluminescent micro sparkles
-  float spark = noise(uv * 120.0 + uTime * 1.3);
-  spark = smoothstep(0.93, 0.98, spark);
-  vec3 glow = vec3(0.7, 0.9, 1.0) * spark * 0.25;
-  col += glow;
+  // Apply structural shading
+  col *= mix(0.4, 2.0, veins); // veins pop as bright ridges
+  col *= 0.9 + micro * 0.2;    // micro variation
 
-  // 6. Soft global pulse  breathing
-  float pulse = sin(uTime * 1.7 + uv.x * 4.0 + uv.y * 6.0) * 0.5 + 0.5;
-  col *= 0.85 + pulse * 0.15;
+  // Darken with grain to avoid neon look
+  col -= grain * 0.06;
 
-  // 7. Slight darkening toward plankton edges
-  float edge = smoothstep(0.05, 0.20, sprite.a);
-  col *= edge * 1.05;
+  // Iridescence (Option B): angle-based thin-film shimmer
+  vec3 viewDir = normalize(vec3(0.0, 0.0, 1.0));
+  vec3 normalApprox = normalize(vec3(
+      noise(p * 220.0 + uTime * 0.1) - noise(p * 220.0 - uTime * 0.1),
+      noise(p * 180.0 - uTime * 0.15) - noise(p * 180.0 + uTime * 0.15), 0.15));
 
-  // 8. Edge soften into background  feather fade
-  float edgeFade = smoothstep(0.0, 0.25, sprite.a);
-  vec3 bgColor = uChromaBackground.rgb;
-  col = mix(bgColor, col, edgeFade);
+  float ndotv = clamp(dot(normalApprox, viewDir), 0.0, 1.0);
+  float film = sin((ndotv * 28.0) + uTime * 1.4) * 0.5 + 0.5;
 
+  vec3 iridA = hsv2rgb(vec3(fract(hueSeed + 0.10), 0.85, 1.00));
+  vec3 iridB = hsv2rgb(vec3(fract(hueSeed + 0.55), 0.90, 0.95));
+
+  vec3 iridescence = mix(iridA, iridB, film);
+  col = mix(col, iridescence, 0.28);
+  float px = 1.0 / 1024.0; // Increase/decrease for blur strength
+  vec3 blurred = blur9(ambientTexture, uv, px);
+  col = mix(col, blurred, 0.5);
   return vec4(col, 1.0);
 }
 
@@ -419,18 +493,11 @@ void main() {
   bool isCurrent;
   bool isBackground;
   bool isAmbient;
-  bool isEnemy;  
-  
-  classifyMask(snapped,
-               isTerrain,
-               isBackground,
-               isCurrent,
-               isPlayer,
-               isEnemy,
-               isAmbient,
-               isVegetation,
-               isStaticVegetation);
-  
+  bool isEnemy;
+
+  classifyMask(snapped, isTerrain, isBackground, isCurrent, isPlayer, isEnemy,
+               isAmbient, isVegetation, isStaticVegetation);
+
   bool isSnapped = true;
 
   // Player outline
@@ -439,6 +506,8 @@ void main() {
   //   gl_FragColor = renderPlayerOutline();
   //   // return;
   // }
+
+  // isAmbient = true;
 
   // Player fill
   if (isPlayer) {
@@ -450,7 +519,7 @@ void main() {
   // Ambient plankton
   if (isAmbient) {
     isSnapped = false;
-    gl_FragColor = renderAmbientPlankton(uv);
+    gl_FragColor = renderAmbientLayer(uv);
     // return;
   }
 
@@ -468,11 +537,11 @@ void main() {
     // return;
   }
 
-  if (isVegetation || isStaticVegetation) {
-    isSnapped = false;
-    gl_FragColor = renderPlayerStarfish(uv);
-    // return;
-  }
+  // if (isVegetation || isStaticVegetation) {
+  //   isSnapped = false;
+  //   gl_FragColor = renderPlayerStarfish(uv);
+  //   // return;
+  // }
 
   // Fallback: pass through snapped color
   if (isSnapped) {

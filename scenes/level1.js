@@ -1,9 +1,10 @@
 import { BaseScene } from '../core/BaseScene.js';
 import { Plankton } from '../entities/plankton.js';
+import { StarFishAndCoral } from '../entities/starfishAndCoral.js';
 
 export class Level1Scene extends BaseScene {
     constructor(p, opts) {
-        super(p);
+        super(p, opts);
         this.p = p;
         this.level = opts.level;
     }
@@ -16,6 +17,11 @@ export class Level1Scene extends BaseScene {
         for (let i = 0; i < 30; i++) {
             const plankton = new Plankton(this.p);
             this.registerEntity(plankton);
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const coral = new StarFishAndCoral(this.p);
+            this.registerEntity(coral);
         }
 
         this.addInGameMenuButtons();

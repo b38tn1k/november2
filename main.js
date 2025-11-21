@@ -8,6 +8,7 @@ import { Debug } from './core/debug.js';
 import { createUI } from './core/ui.js';
 import { Settings } from './config/settings.js';
 import { parseLevel } from './core/parseLevel.js';
+import {applyChromaMapWithDisable} from './core/utils.js';
 
 import { MenuScene } from './scenes/menu.js';
 import { ChapterScene } from './scenes/chapter.js';
@@ -35,16 +36,17 @@ export const mainSketch = (p) => {
     p.shared.settings = Settings
     p.shared.timing = createTiming(p);
 
-    let colorCount = Object.keys(p.shared.chroma).length
-    let colorAngle = 255 / colorCount;
-    p.colorMode(p.HSL, 255);
-    let hue = 0;
-    let saturation = 255;
-    let level = 128;
-    for (let k in p.shared.chroma) {
-      p.shared.chroma[k] = p.color(hue, saturation, level);
-      hue += colorAngle;
-    }
+    applyChromaMapWithDisable(p, p.shared.chroma);
+    // let colorCount = Object.keys(p.shared.chroma).length
+    // let colorAngle = 255 / colorCount;
+    // p.colorMode(p.HSL, 255);
+    // let hue = 0;
+    // let saturation = 255;
+    // let level = 128;
+    // for (let k in p.shared.chroma) {
+    //   p.shared.chroma[k] = p.color(hue, saturation, level);
+    //   hue += colorAngle;
+    // }
     p.colorMode(p.RGB, 255);
 
     setupCanvasWithAdaptation(p);
@@ -71,23 +73,26 @@ export const mainSketch = (p) => {
     // Register scenes
     // this.p.shared.levels.level2;
     p.shared.sceneManager.register('menu', MenuScene);
-    p.shared.sceneManager.register('chapter1', ChapterScene, {levels: [1, 2]});
-    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [3, 4]});
-    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [5, 6]});
-    p.shared.sceneManager.register('chapter4', ChapterScene, {levels: [7, 8]});
+    p.shared.sceneManager.register('chapter1', ChapterScene, {levels: [1, 2, 3]});
+    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [4, 5]});
+    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [6, 7]});
+    p.shared.sceneManager.register('chapter4', ChapterScene, {levels: [8, 9]});
 
-    p.shared.sceneManager.register('level1', Level1Scene, { level: p.shared.levels.level1 });
-    p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2 });
-    p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3 });
-    p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
+    p.shared.sceneManager.register('level1', Level1Scene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
+    p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2, nextScene: 'level3', chapter: 'chapter1' });
+    p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3, nextScene: 'level1', chapter: 'chapter1' });
+    // p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
     p.shared.sceneManager.change('menu');
 
     // final canvas initialization
     initializeCanvasPostSetup(p);
-  };
+  };       
 
   p.draw = () => {
-    p.shared.timing.update();
+    if (p.shared.sceneManager.continue) {
+      p.shared.timing.update();
+    }
+    
 
     const { renderer, sceneManager } = p.shared;
     if (!renderer || !sceneManager) return;

@@ -6,6 +6,7 @@ export function createSceneManager(p) {
     scenes: {},
     current: null,
     Debug: p.shared.Debug,
+    continue: true,
 
     register(name, SceneClass, options = {}) {
       // Instantiate the scene class with p

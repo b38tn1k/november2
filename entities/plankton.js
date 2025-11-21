@@ -13,19 +13,21 @@ export class Plankton extends BaseEntity {
         this.speed = p.shared.settings.ambientSpeed;
         this.sinkancy = p.shared.settings.ambientSinkancy;
         this.baseBuoyancy = p.shared.settings.ambientBuoyancy;
-        this.restlessness = p.random() * 6 + 1;
+        this.restlessness = p.random() * 3 + 1;
         const reefColors = [
             p.color('#FF40D9'),   // coral pink
             p.color('#14D2C8'),   // turquoise reef
             p.color('#B4FF6E'),   // lime-yellow biolume
             p.color('#DC5AFF'),   // violet sea sponge
             p.color('#FFA52D')    // orange anthias
+
         ];
         this.color = p.random(reefColors);
+        this.color2 = p.random(reefColors);
 
         this.mainPhysicsParticle = this.createPhysicsParticle(
             0, 0,      // x,y
-            1,         // mass
+            3,         // mass
             true,      // main
             false      // fixed
         );
@@ -36,10 +38,15 @@ export class Plankton extends BaseEntity {
         const root = this.mainPhysicsParticle;
         root.mass = BODY_MASS;
 
-        this.art = p.createGraphics(64, 64);
-        this.art.pixelDensity(1);
-        this.art.noSmooth();
-        this.art.elt.getContext('2d').imageSmoothingEnabled = false;
+        this.shapeTexture = p.createGraphics(64, 64);
+        this.shapeTexture.pixelDensity(1);
+        this.shapeTexture.noSmooth();
+        this.shapeTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+
+        this.colorTexture = p.createGraphics(64, 64);
+        this.colorTexture.pixelDensity(1);
+        this.colorTexture.noSmooth();
+        this.colorTexture.elt.getContext('2d').imageSmoothingEnabled = false;
         this.generateArt();
     }
 
@@ -83,9 +90,13 @@ export class Plankton extends BaseEntity {
 
     cleanup() {
         super.cleanup();
-        if (this.art) {
-            this.art.remove();
-            this.art = null;
+        if (this.shapeTexture) {
+            this.shapeTexture.remove();
+            this.shapeTexture = null;
+        }
+        if (this.colorTexture) {
+            this.colorTexture.remove();
+            this.colorTexture = null;
         }
     }
 
@@ -135,7 +146,7 @@ export class Plankton extends BaseEntity {
             return Math.floor(Math.random() * (max - min) + min);
         }
 
-        function invader(layer, x, y, pixelSize, scolor) {
+        function invader(layer, layer2, x, y, pixelSize, scolor, tcolor, rcolor) {
             //crab 8 x 11
             //squid 8 x 8
             //octopus 8 x 12
@@ -143,6 +154,8 @@ export class Plankton extends BaseEntity {
             let invHeight = randomInRange(3, 5);
             layer.fill(scolor);
             layer.stroke(scolor);
+            layer2.fill(tcolor);
+            layer2.stroke(tcolor);
 
             let maxVal = 0.0;
             let sum = 0;
@@ -174,14 +187,22 @@ export class Plankton extends BaseEntity {
                         if (grid[isMirrored ? invLength - i - 1 : i][j] > threshold) {
                             const xPos = x + (isMirrored ? i : i - invLength) * pixelSize;
                             const yPos = y + j * pixelSize - Math.floor(invHeight / 2) * pixelSize;
+                            if (i % 2 == 0) {
+                                layer2.fill(tcolor);
+                                layer2.stroke(tcolor);
+                            } else {
+                                layer2.fill(rcolor);
+                                layer2.stroke(rcolor); 
+                            }
                             layer.rect(xPos, yPos, pixelSize, pixelSize);
+                            layer2.rect(xPos, yPos, pixelSize, pixelSize);
                         }
                     }
                 }
             }
         }
-        invader(this.art, this.art.width / 2, this.art.height / 2, 4, this.p.shared.chroma.ambient);
-        // this.art
+        invader(this.shapeTexture, this.colorTexture, this.shapeTexture.width / 2, this.shapeTexture.height / 2, 4, this.p.shared.chroma.ambient, this.color, this.color2);
+        // this.shapeTexture
 
     }
 
@@ -190,10 +211,15 @@ export class Plankton extends BaseEntity {
         const { x, y } = this.scene.worldToScreen(this.worldPos);
         const dims = Math.floor(this.pxSize * 6);
         layer.imageMode(this.p.CENTER);
-        layer.image(this.art, x, y, dims, dims);
+        layer.image(this.shapeTexture, x, y, dims, dims);
+        texture.imageMode(this.p.CENTER);
+        texture.image(this.colorTexture, x, y, dims, dims);
 
-        texture.fill(this.color);
-        texture.circle(x, y, dims);
+        // this.colorTexture
+        // texture.rectMode(this.p.CENTER);
+        // texture.noStroke();
+        // texture.fill(this.color);
+        // texture.circle(x, y, dims/2);
 
         // layer.fill(this.p.shared.chroma.ambient);
         // layer.noStroke();

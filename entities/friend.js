@@ -12,12 +12,14 @@ const FROND_MASS = 1;
 const STEM_MASS = 4;
 const ROOT_MASS = 12;
 
-export class Player extends BaseEntity {
+export class Friend extends BaseEntity {
     constructor(p) {
         super(p);
 
         this.size = 1.0;
         this.ambientCurrentScale = 0.5;
+        // this.color = p.color('#40E0D0');
+        this.color = p.color('#E0D040');
 
         this.speed = 40;
         this.speed = p.shared.settings.playerSpeed || 40;
@@ -102,61 +104,49 @@ export class Player extends BaseEntity {
     }
 
     onCurrent(particle, current) {
-        if (current.levelDefinitionCurrent) {
-            // this.p.shared.timing.getOsc(0.5, 0.5, 1000) 
-            particle.addForce(current.dx, current.dy);
-        } else {
-            particle.addForce(current.dx * this.ambientCurrentScale, current.dy * this.ambientCurrentScale);
-        }
-    }
-
-    onActionStart(action) {
-        if (this.moving[action] !== undefined) this.moving[action] = true;
-        this.Debug?.log('player', `Started ${action}`);
-    }
-
-    onActionEnd(action) {
-        if (this.moving[action] !== undefined) this.moving[action] = false;
-        this.Debug?.log('player', `Ended ${action}`);
+        particle.addForce(current.dx, current.dy);
+        // if (current.levelDefinitionCurrent) {
+        //     // this.p.shared.timing.getOsc(0.5, 0.5, 1000) 
+        //     particle.addForce(current.dx, current.dy);
+        // } else {
+        //     particle.addForce(current.dx * this.ambientCurrentScale, current.dy * this.ambientCurrentScale);
+        // }
     }
 
     applyForces(dt) {
-        if (this.moving.sink) {
-            this.baseBuoyancy = this.sinkancy;
-        } else {
-            this.baseBuoyancy = this.buoyancy;
-        }
-
+        // if (this.moving.sink) {
+        //     this.baseBuoyancy = this.sinkancy;
+        // } else {
+        //     this.baseBuoyancy = this.buoyancy;
+        // }
         super.applyForces(dt);
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
 
-        // Horizontal control
-        // if (this.moving.moveLeft) mp.addForce(-this.speed, 0);
-        // if (this.moving.moveRight) mp.addForce(+this.speed, 0);
-
-        // Vertical control
-        // if (this.moving.sink) mp.addForce(0, this.sinkancy);
     }
 
     postPhysics() {
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
 
-        this.worldPos.x = mp.pos.x;
-        this.worldPos.y = mp.pos.y;
+        // this.worldPos.x = mp.pos.x;
+        // this.worldPos.y = mp.pos.y;
+        mp.pos.x = this.worldPos.x;
+        mp.pos.y = this.worldPos.y;
         this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
     }
 
-    draw(layer) {
+    draw(layer, texture) {
         if (!this.visible || !this.scene) return;
         const { x, y } = this.scene.worldToScreen(this.worldPos);
 
-        // const chroma = this.p.shared.chroma;
-        // const pc = chroma.player;
         layer.noFill();
-        layer.stroke(this.p.shared.chroma.player);
+        layer.stroke(this.p.shared.chroma.ambient);
         layer.strokeWeight(this.p.shared.settings.playerStrokeWeight * layer.width || 8);
+
+        texture.noFill();
+        texture.stroke(this.color);
+        texture.strokeWeight(this.p.shared.settings.playerStrokeWeight * layer.width * 2 || 10);
 
         for (const indexes of this.frond_particle_indexes) {
             const sp = this.scene.worldToScreen(this.physicsParticles[indexes[0]].pos); // start
@@ -188,7 +178,15 @@ export class Player extends BaseEntity {
                 c2.x, c2.y,       // control 2
                 ep.x, ep.y        // end
             );
+
+            texture.bezier(
+                sp.x, sp.y,       // start
+                c1.x, c1.y,       // control 1
+                c2.x, c2.y,       // control 2
+                ep.x, ep.y        // end
+            );
         }
-        layer.noStroke();
+
+
     }
 }

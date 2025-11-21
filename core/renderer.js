@@ -117,7 +117,7 @@ export async function createRenderer(p) {
         shader.setUniform('uChromaPlayer', this.colorToVec4(chroma.player));
         shader.setUniform('uChromaTerrain', this.colorToVec4(chroma.terrain));
         shader.setUniform('uChromaVegetation', this.colorToVec4(chroma.vegetation));
-        shader.setUniform('uChromaStaticVegetation', this.colorToVec4(chroma.static_vegetation));
+        shader.setUniform('uChromaStaticVegetation', this.colorToVec4(chroma.staticVegetation));
         shader.setUniform('uChromaCurrent', this.colorToVec4(chroma.current));
         shader.setUniform('uChromaBackground', this.colorToVec4(chroma.background));
         shader.setUniform('uChromaAmbient', this.colorToVec4(chroma.ambient));

@@ -18,6 +18,12 @@ export function createTiming(p) {
       this.elapsed += this.delta;
     },
 
+    getOsc(bias, amplitude, period) {
+      const time = p.millis();
+      const osc = bias + amplitude * 0.5 * (1 + Math.sin((2 * Math.PI * time) / period));
+      return osc;
+    },
+
     shouldStep() {
       if (this.accumulator >= this.step) {
         this.accumulator -= this.step;

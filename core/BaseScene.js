@@ -4,10 +4,12 @@ import { GeometryTools } from './geometryTools.js';
 import { SceneDrawingMixin } from './SceneDrawingMixin.js';
 import { generateCurrents } from './generateCurrents.js';
 import { MyButton } from '../components/myButton.js';
+
 import { Grass } from '../entities/grass.js';
+import { Friend } from '../entities/friend.js';
 
 export class BaseScene {
-  constructor(p) {
+  constructor(p, opts = {}) {
     this.p = p;
     this.Debug = p.shared.Debug;
     this.renderer = p.shared.renderer;
@@ -21,6 +23,8 @@ export class BaseScene {
     this.currentsLookup = null;
     this.physicsWorld = null;
     this.physicsSolver = null;
+    this.nextScene = opts.nextScene || null;
+    this.levelGoal = {};
   }
 
   init() {
@@ -61,6 +65,13 @@ export class BaseScene {
         this.currentsLookup.set(key, c);
       }
 
+      this.levelGoal = this.levelData.goal;
+      if (this.levelGoal) {
+        const goalEntity = new Friend(this.p);
+        goalEntity.reset({ x: this.levelGoal.x + 0.5, y: this.levelGoal.y + 0.5 });
+        this.registerEntity(goalEntity);
+      }
+
       for (const entity of this.levelData.entities) {
         console.log(entity);
         switch (entity.type) {
@@ -94,10 +105,10 @@ export class BaseScene {
         const tileSize = this.mapTransform.tileSizePx;
         const r = Math.floor(this.p.map(c.dx, minDX, maxDX, 0, 255));
         const g = Math.floor(this.p.map(c.dy, minDY, maxDY, 0, 255));
-        const b = 0; // neutral
+        const b = 128; // neutral
         layer.noStroke();
         layer.fill(r, g, b);
-        layer.rect(screenPos.x*downscale, screenPos.y*downscale, tileSize*downscale, tileSize*downscale);
+        layer.circle(screenPos.x*downscale, screenPos.y*downscale, tileSize*downscale*.8);
       }
     }
     targetLayer.imageMode(this.p.CORNER);
@@ -134,6 +145,18 @@ export class BaseScene {
     this.recentlyLaunchedScene = isNaN(this.sceneFrameCount) || this.sceneFrameCount < 10;
 
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
+
+    // console.log(player.worldPos.x, player.worldPos.y);
+    // this.levelGoal
+
+    if (player.worldPos.x - this.levelGoal.x < 1.0 && player.worldPos.x - this.levelGoal.x > -1.0 &&
+        player.worldPos.y - this.levelGoal.y < 1.0 && player.worldPos.y - this.levelGoal.y > -1.0) {
+      console.log('Level complete!');
+      if (this.nextScene) {
+        this.p.shared.sceneManager.change(this.nextScene);
+      }
+
+    }
 
     // 1. apply entity forces
     for (const entity of this.entities) {

@@ -1,0 +1,304 @@
+import { BaseEntity } from '../core/BaseEntity.js';
+
+// starfish and coral grow on rocks and other solid surfaces, the do not move and have no physics particles
+
+export class StarFishAndCoral extends BaseEntity {
+    constructor(p) {
+        super(p);
+        this.mainPhysicsParticle = null;
+        const reefColors = [
+            p.color('#FF40D9'),   // coral pink
+            p.color('#14D2C8'),   // turquoise reef
+            p.color('#B4FF6E'),   // lime-yellow biolume
+            p.color('#DC5AFF'),   // violet sea sponge
+            p.color('#FFA52D')    // orange anthias
+
+        ];
+        this.color = p.random(reefColors);
+        this.color2 = p.random(reefColors);
+        this.color3 = p.random(reefColors);
+        this.myColors = [this.color, this.color2, this.color3];
+        this.shapeTexture = p.createGraphics(64, 64);
+        this.shapeTexture.pixelDensity(1);
+        this.shapeTexture.noSmooth();
+        this.shapeTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+        this.colorTexture = p.createGraphics(64, 64);
+        this.colorTexture.pixelDensity(1);
+        this.colorTexture.noSmooth();
+        this.colorTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+        this.size = 0.2 + Math.random() * 0.5;
+        this.pxSize = 10;
+        this.generateArt();
+
+        const shapeTypes = ['starfish', 'coral', 'anemone', 'seaCucumber'];
+        const colorTypes = ['striped', 'spotted', 'gradient', 'concentric', 'turing'];
+        this.shapeType = p.random(shapeTypes);
+        this.colorType = p.random(colorTypes);
+        this.positions = [];
+    }
+
+    initAmbientGeneratedEntity() {
+        if (!this.scene || !this.scene.levelData) return;
+
+        const { cols, rows } = this.scene.levelData;
+        this.positions.length = 0;
+
+        this.generateArt();
+        this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
+
+        // 1. Collect all solid tiles
+        const solidTiles = [];
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const tile = this.scene.getTile(x, y);
+                if (tile && tile.solid) {
+                    solidTiles.push({ x, y });
+                }
+            }
+        }
+
+        if (solidTiles.length === 0) {
+            console.warn("⚠️ No solid tiles found for ambient entities");
+            return;
+        }
+
+        // 2. Pick up to N positions from the solid tile list
+        const targetCount = 5;
+        const max = Math.min(targetCount, solidTiles.length);
+
+        for (let i = 0; i < max; i++) {
+            const pick = this.p.random(solidTiles);   // p5's random(array) picker
+            this.positions.push({
+                x: pick.x + Math.random(),
+                y: pick.y + Math.random(),
+                size: 0.5 + Math.random() * 0.5
+            });
+        }
+
+        this.visible = this.positions.length > 0;
+    }
+
+    // initAmbientGeneratedEntity() {
+    //     if (!this.scene || !this.scene.levelData) return;
+
+    //     const { cols, rows } = this.scene.levelData;
+
+    //     let tries = 0;
+    //     const maxTries = 200;
+    //     this.generateArt();
+    //     this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
+
+    //     while (tries++ < maxTries && this.positions.length < 5) {
+    //         const x = Math.floor(Math.random() * (cols + 2)) - 1;
+    //         const y = Math.floor(Math.random() * (rows + 2)) - 1;
+
+    //         const tile = this.scene.getTile(x, y);
+
+    //         // grow on rocks etc
+    //         if (tile && tile.solid) {
+    //             this.visible = true;
+    //             this.positions.push({ x: x + Math.random(), y: y + Math.random(), size:  0.5 + Math.random() * 0.5});
+    //             // return;
+    //         }
+    //     }
+
+    //     console.warn("⚠️ Plankton could not find valid spawn after many tries");
+    // }
+
+    cleanup() {
+        super.cleanup();
+        if (this.shapeTexture) {
+            this.shapeTexture.remove();
+            this.shapeTexture = null;
+        }
+        if (this.colorTexture) {
+            this.colorTexture.remove();
+            this.colorTexture = null;
+        }
+    }
+
+    generateArt() {
+        const p = this.p;
+        const gShape = this.shapeTexture;
+        const gColor = this.colorTexture;
+
+        gShape.clear();
+        gColor.clear();
+
+        gShape.push();
+        gColor.push();
+
+        gShape.noStroke();
+        gColor.noStroke();
+
+        // === DRAW SHAPE ===
+        switch (this.shapeType) {
+            case 'starfish':
+                this.drawStarfish(gShape);
+                break;
+            case 'coral':
+                this.drawCoral(gShape);
+                break;
+            case 'anemone':
+                this.drawAnemone(gShape);
+                break;
+            case 'seaCucumber':
+                this.drawSeaCucumber(gShape);
+                break;
+        }
+
+        // === DRAW COLOR PATTERN ===
+        switch (this.colorType) {
+            case 'striped':
+                this.drawStriped(gColor);
+                break;
+            case 'spotted':
+                this.drawSpotted(gColor);
+                break;
+            case 'gradient':
+                this.drawGradient(gColor);
+                break;
+            case 'concentric':
+                this.drawConcentric(gColor);
+                break;
+            case 'turing':
+                this.drawTuringNoise(gColor);
+                break;
+        }
+
+        gShape.pop();
+        gColor.pop();
+    }
+
+    drawStarfish(g) {
+        const p = this.p;
+        g.push();
+        g.translate(32, 32);
+        g.fill(this.p.shared.chroma.ambient);
+        const arms = 5;
+        const radiusOuter = 26;
+        const radiusInner = 10;
+
+        g.beginShape();
+        for (let i = 0; i < arms * 2; i++) {
+            const angle = (p.TWO_PI / (arms * 2)) * i;
+            const r = i % 2 === 0 ? radiusOuter : radiusInner;
+            g.vertex(Math.cos(angle) * r, Math.sin(angle) * r);
+        }
+        g.endShape(p.CLOSE);
+        g.pop();
+    }
+
+    drawCoral(g) {
+        const p = this.p;
+        g.push();
+        g.translate(32, 32);
+        g.fill(this.p.shared.chroma.ambient);
+        for (let i = 0; i < 14; i++) {
+            const a = p.random(p.TWO_PI);
+            const len = p.random(15, 30);
+            const w = p.random(6, 12);
+            g.push();
+            g.rotate(a);
+            g.rect(0, -w / 2, len, w, w * 0.6);
+            g.pop();
+        }
+        g.pop();
+    }
+
+    drawAnemone(g) {
+        const p = this.p;
+        g.translate(32, 32);
+        g.fill(this.p.shared.chroma.ambient);
+        const tentacles = 22;
+        for (let i = 0; i < tentacles; i++) {
+            const angle = (p.TWO_PI / tentacles) * i;
+            const len = p.random(18, 32);
+            g.push();
+            g.rotate(angle);
+            g.beginShape();
+            g.vertex(32, 32);
+            g.bezierVertex(36, 22, 40, 14, 32 + len, 32 - len);
+            g.endShape();
+            g.pop();
+        }
+    }
+
+    drawSeaCucumber(g) {
+        const p = this.p;
+        g.fill(this.p.shared.chroma.ambient);
+        g.ellipse(32, 32, 54, 28);
+        for (let i = 0; i < 18; i++) {
+            const a = p.random(p.TWO_PI);
+            const r = 12;
+            g.ellipse(Math.cos(a) * r, Math.sin(a) * r, 6, 6);
+        }
+    }
+
+    drawStriped(g) {
+        const p = this.p;
+        for (let i = 0; i < 64; i += 6) {
+            g.fill(this.myColors[(i / 6) % 3]);
+            g.rect(0, i, 64, 6);
+        }
+    }
+
+    drawSpotted(g) {
+        const p = this.p;
+        g.background(0);
+        for (let i = 0; i < 40; i++) {
+            g.fill(this.myColors[i % 3]);
+            g.circle(p.random(64), p.random(64), p.random(4, 10));
+        }
+    }
+
+    drawGradient(g) {
+        const p = this.p;
+        for (let y = 0; y < 64; y++) {
+            const amt = y / 63;
+            g.stroke(p.lerpColor(this.color, this.color2, amt));
+            g.line(0, y, 64, y);
+        }
+    }
+
+    drawConcentric(g) {
+        const p = this.p;
+        for (let r = 28; r > 0; r -= 4) {
+            g.fill(p.lerpColor(this.color, this.color2, r / 28));
+            g.circle(32, 32, r * 2);
+        }
+    }
+
+    drawTuringNoise(g) {
+        const p = this.p;
+        g.background(0);
+        for (let y = 0; y < 64; y++) {
+            for (let x = 0; x < 64; x++) {
+                const n = p.noise(x * 0.12, y * 0.12);
+                g.stroke(n > 0.5 ? this.color : this.color2);
+                g.point(x, y);
+            }
+        }
+    }
+
+    draw(layer, texture) {
+        if (!this.visible || !this.scene) return;
+        for (let pos of this.positions) {
+            const { x, y } = this.scene.worldToScreen(pos);
+            const dims = Math.floor(this.pxSize);
+            layer.imageMode(this.p.CENTER);
+            layer.image(this.shapeTexture, x, y, dims, dims);
+            texture.imageMode(this.p.CENTER);
+            texture.image(this.colorTexture, x, y, dims, dims);
+        }
+
+
+        // texture.fill(this.color);
+        // texture.noStroke();
+        // layer.fill(this.p.shared.chroma.ambient);
+        // layer.circle(x, y, this.pxSize);
+        // texture.circle(x, y, this.pxSize * 2);
+
+
+    }
+}

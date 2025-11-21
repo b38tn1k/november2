@@ -1,11 +1,11 @@
 {
-  "player": null,
-  "terrain": null,
-  "vegetation": null,
-  "static_vegetation": null,
-  "current": null,
-  "background": null,
-  "ambient": null,
-  "enemy": null
+  "player": true,
+  "terrain": true,
+  "vegetation": false,
+  "staticVegetation": false,
+  "current": true,
+  "background": true,
+  "ambient": true,
+  "enemy": true
   
 }

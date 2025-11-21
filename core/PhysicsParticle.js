@@ -25,6 +25,7 @@ export class PhysicsParticle {
 
         this.radius = 1;
         this.worldUnitRadius = 0;
+        this.springRestoringForce = false;
 
         this.label = 0;
     }
@@ -216,8 +217,27 @@ export class PhysicsParticle {
 
         // SOFT tether: gentle positional slide toward target
         const softFactor = child.softFactor;
-        child.pos.x += dx * softFactor;
-        child.pos.y += dy * softFactor;
+        if (child.springRestoringForce) {
+
+            // 1. Deadzone: don't over-correct near equilibrium
+            if (dist < 0.02) return;
+
+            // 2. Scale restoring force gently with distance
+            const restoring = softFactor;   // tune 0.02–0.15 for softness
+            const fx = (dx / dist) * restoring;
+            const fy = (dy / dist) * restoring;
+
+            child.addForce(fx, fy);
+
+            return;
+        } else {
+            child.pos.x += dx * softFactor;
+            child.pos.y += dy * softFactor;
+        }
+    }
+
+    clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     /** -------------------------------------------------------
