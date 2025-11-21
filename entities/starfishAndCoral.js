@@ -30,7 +30,7 @@ export class StarFishAndCoral extends BaseEntity {
         this.pxSize = 10;
         this.generateArt();
 
-        const shapeTypes = ['starfish', 'coral', 'anemone', 'seaCucumber'];
+        const shapeTypes = ['starfish', 'coral', 'anemone'];//, 'seaCucumber'];
         const colorTypes = ['striped', 'spotted', 'gradient', 'concentric', 'turing'];
         this.shapeType = p.random(shapeTypes);
         this.colorType = p.random(colorTypes);
