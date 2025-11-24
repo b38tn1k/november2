@@ -5,6 +5,15 @@ import { BaseEntity } from '../core/BaseEntity.js';
 export class StarFishAndCoral extends BaseEntity {
     constructor(p) {
         super(p);
+        if (!p.shared.assets) p.shared.assets = {};
+        if (!p.shared.assets.ambientShapes) p.shared.assets.ambientShapes = {};
+
+        const shapeTypes = ['starfish', 'coral', 'anemone']; // , 'seaCucumber'
+        const colorTypes = ['striped', 'spotted', 'gradient', 'concentric', 'turing'];
+
+        this.shapeType = p.random(shapeTypes);
+        this.colorType = p.random(colorTypes);
+
         this.mainPhysicsParticle = null;
         const reefColors = [
             p.color('#FF40D9'),   // coral pink
@@ -18,10 +27,22 @@ export class StarFishAndCoral extends BaseEntity {
         this.color2 = p.random(reefColors);
         this.color3 = p.random(reefColors);
         this.myColors = [this.color, this.color2, this.color3];
-        this.shapeTexture = p.createGraphics(64, 64);
-        this.shapeTexture.pixelDensity(1);
-        this.shapeTexture.noSmooth();
-        this.shapeTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+        if (!p.shared.assets) p.shared.assets = {};
+        if (!p.shared.assets.ambientShapes) p.shared.assets.ambientShapes = {};
+
+        let cached = p.shared.assets.ambientShapes[this.shapeType];
+        console.log(p.shared.assets, cached);
+        if (!cached) {
+            const g = p.createGraphics(64, 64);
+            g.pixelDensity(1);
+            g.noSmooth();
+            g.elt.getContext('2d').imageSmoothingEnabled = false;
+            this.drawShapeInto(g, this.shapeType);
+            p.shared.assets.ambientShapes[this.shapeType] = g;
+            cached = g;
+        }
+        this.shapeTexture = cached;
+
         this.colorTexture = p.createGraphics(64, 64);
         this.colorTexture.pixelDensity(1);
         this.colorTexture.noSmooth();
@@ -30,10 +51,6 @@ export class StarFishAndCoral extends BaseEntity {
         this.pxSize = 10;
         this.generateArt();
 
-        const shapeTypes = ['starfish', 'coral', 'anemone'];//, 'seaCucumber'];
-        const colorTypes = ['striped', 'spotted', 'gradient', 'concentric', 'turing'];
-        this.shapeType = p.random(shapeTypes);
-        this.colorType = p.random(colorTypes);
         this.positions = [];
     }
 
@@ -81,46 +98,42 @@ export class StarFishAndCoral extends BaseEntity {
 
     cleanup() {
         super.cleanup();
-        if (this.shapeTexture) {
+        if (this.shapeTexture && this.shapeTexture !== this.p.shared.assets.ambientShapes[this.shapeType]) {
             this.shapeTexture.remove();
-            this.shapeTexture = null;
         }
+        this.shapeTexture = null;
         if (this.colorTexture) {
             this.colorTexture.remove();
             this.colorTexture = null;
         }
     }
 
-    generateArt() {
-        const p = this.p;
-        const gShape = this.shapeTexture;
-        const gColor = this.colorTexture;
-
-        gShape.clear();
-        gColor.clear();
-
-        gShape.push();
-        gColor.push();
-
-        gShape.noStroke();
-        gColor.noStroke();
-
-        // === DRAW SHAPE ===
-        switch (this.shapeType) {
+    drawShapeInto(g, shapeKey) {
+        g.clear();
+        g.push();
+        g.noStroke();
+        switch (shapeKey) {
             case 'starfish':
-                this.drawStarfish(gShape);
+                this.drawStarfish(g);
                 break;
             case 'coral':
-                this.drawCoral(gShape);
+                this.drawCoral(g);
                 break;
             case 'anemone':
-                this.drawAnemone(gShape);
+                this.drawAnemone(g);
                 break;
             case 'seaCucumber':
-                this.drawSeaCucumber(gShape);
+                this.drawSeaCucumber(g);
                 break;
         }
+        g.pop();
+    }
 
+    generateArt() {
+        const p = this.p;
+        const gColor = this.colorTexture;
+        gColor.clear();
+        gColor.noStroke();
         // === DRAW COLOR PATTERN ===
         switch (this.colorType) {
             case 'striped':
@@ -139,9 +152,6 @@ export class StarFishAndCoral extends BaseEntity {
                 this.drawTuringNoise(gColor);
                 break;
         }
-
-        gShape.pop();
-        gColor.pop();
     }
 
     drawStarfish(g) {

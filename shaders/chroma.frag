@@ -510,10 +510,17 @@ void main() {
     return;
   }
 
-  // Snap to nearest chroma key
+  // Snap to nearest color from the chroma key map
+  // see config / chroma.json for various colors used / disabled
   vec4 snapped = snapChroma(maskColor);
 
+  //you can see how I map the colors in core/utils.js -> applyChromaMapWithDisable
+  // we could all the color layers that are active and try to evenly space them over the color wheel
+  // so that we can be confident that each color is as different as possible for better segmentation and sampling.
+  // idk if this is a common idea, just what I cam up with thinkning about how we could do shader textures, and then thinking about chroma-keying and green screens
+
   // Classify
+  // based on the incoming snapped color, decide what sort of texture is valid to draw
   bool isPlayer;
   bool isTerrain;
   bool isVegetation;
@@ -528,14 +535,8 @@ void main() {
 
   bool isSnapped = true;
 
-  // Player outline
-  // if (!isPlayer && isPlayerEdge(uv)) {
-  //   isSnapped = false;
-  //   gl_FragColor = renderPlayerOutline();
-  //   // return;
-  // }
-
-  // isAmbient = true;
+  // draw the texture based on that classification
+  // the functions here define the textures for each
 
   // Player fill
   if (isPlayer) {
@@ -545,6 +546,7 @@ void main() {
   }
 
   // Ambient plankton
+  // the ambient layer also uses the ambient texture canvas, which can be sampled for colors, with the main text0 just providing the shape
   if (isAmbient) {
     isSnapped = false;
     gl_FragColor = renderAmbientLayer(uv);
@@ -552,6 +554,8 @@ void main() {
   }
 
   // Background water and currents
+  // again, using another texture to provide informaiton about the currents - direction and strength come from currentTexture RGB channels
+  
   if (isBackground) {
     isSnapped = false;
     gl_FragColor = renderWater(uv);
@@ -563,7 +567,9 @@ void main() {
     isSnapped = false;
     gl_FragColor = renderTerrain(uv);
     // return;
-  }
+  }   
+
+  // I have vegetation turned off for now, so just ignore it. it is the same color as background anyway.
 
   // if (isVegetation || isStaticVegetation) {
   //   isSnapped = false;
@@ -571,7 +577,7 @@ void main() {
   //   // return;
   // }
 
-  // Fallback: pass through snapped color
+  // Fallback: pass through snapped color (anything that is unclassifiable)
   if (isSnapped) {
     gl_FragColor = snapped;
   }

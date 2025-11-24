@@ -28,7 +28,7 @@ export const mainSketch = (p) => {
     // p.shared.mainFont = p.loadFont('./assets/found/Comic_Neue/ComicNeue-Regular.ttf');
     p.shared.levels = p.loadJSON('./config/levels.json');
     p.shared.chroma = p.loadJSON('./config/chroma.json');
-    p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
+    // p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
   };
 
   p.setup = async () => {
@@ -82,6 +82,7 @@ export const mainSketch = (p) => {
     p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2, nextScene: 'level3', chapter: 'chapter1' });
     p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3, nextScene: 'level1', chapter: 'chapter1' });
     p.shared.sceneManager.register('test', Level1Scene, { level: p.shared.levels.testLevel, nextScene: 'level1', chapter: 'chapter1' });
+    p.shared.sceneManager.continue = true;
 
     // p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
     p.shared.sceneManager.change('menu');

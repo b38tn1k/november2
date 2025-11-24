@@ -24,6 +24,7 @@ export class Player extends BaseEntity {
         this.sinkancy = p.shared.settings.playerSinkancy || 30;
         this.buoyancy = p.shared.settings.playerBuoyancy || -12.5;
         this.baseBuoyancy = p.shared.settings.playerBuoyancy || -12.5;
+        this.ready = false;
 
         this.moving = {
             moveLeft: false,
@@ -97,6 +98,11 @@ export class Player extends BaseEntity {
         for (const p of this.physicsParticles) p.label = `anen_${i++}`;
     }
 
+    reset(spawn = { x: 0, y: 0 }) {
+        super.reset(spawn);
+        this.ready = false;
+    }
+
     cleanup() {
         // intentional no-op
     }
@@ -111,7 +117,10 @@ export class Player extends BaseEntity {
     }
 
     onActionStart(action) {
-        if (this.moving[action] !== undefined) this.moving[action] = true;
+        if (this.moving[action] !== undefined) {
+            this.moving[action] = true;
+            this.ready = true;
+        }
         this.Debug?.log('player', `Started ${action}`);
     }
 
@@ -121,6 +130,8 @@ export class Player extends BaseEntity {
     }
 
     applyForces(dt) {
+        if (!this.ready) return;
+        
         if (this.moving.sink) {
             this.baseBuoyancy = this.sinkancy;
         } else {
