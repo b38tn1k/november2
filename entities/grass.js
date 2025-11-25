@@ -31,7 +31,7 @@ export class Grass extends BaseEntity {
             this.x, this.y,      // x,y
             1,         // mass
             true,      // main
-            true      // fixed
+            false      // fixed
         );
 
         this.mainPhysicsParticle.updateRadii(ROOT_RADIUS, this.size);
@@ -39,7 +39,7 @@ export class Grass extends BaseEntity {
 
         const root = this.mainPhysicsParticle;
         root.mass = ROOT_MASS;
-        root.springRestoringForce = true;
+        // root.springRestoringForce = true;
 
         switch (this.direction) {
             case "up":
@@ -49,7 +49,7 @@ export class Grass extends BaseEntity {
                 tip.mass = STEM_MASS;
                 tip.updateRadii(ROOT_RADIUS, this.size);
                 tip.softFactor = 0.01;
-                tip.springRestoringForce = true;
+                // tip.springRestoringForce = true;
                 tip.maxStretch = STEM_SEG_LENGTH * 1.5;
                 this.physicsParticles.push(tip);
                 break;
@@ -88,8 +88,10 @@ export class Grass extends BaseEntity {
     postPhysics() {
         const mp = this.mainPhysicsParticle;
         if (!mp) return;
-        this.worldPos.x = mp.pos.x;
-        this.worldPos.y = mp.pos.y;
+        // this.worldPos.x = mp.pos.x;
+        // this.worldPos.y = mp.pos.y;
+        mp.pos.x = this.worldPos.x;
+        mp.pos.y = this.worldPos.y;
         this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
     }
 
@@ -115,7 +117,7 @@ export class Grass extends BaseEntity {
         }
 
         const { x, y } = this.scene.worldToScreen(this.worldPos);
-        // console.log("drawing grass", this.worldPos, x, y);
+        console.log("drawing grass", this.worldPos, x, y);
         const dims = Math.floor(this.pxSize * 6);
         const strokeW = this.bladeWidth * layer.width || 4;
         layer.noFill();
