@@ -246,82 +246,83 @@ vec3 blur9(sampler2D tex, vec2 uv, float px) {
 vec4 renderAmbientLayer(vec2 uv) {
   // Mask provides only color family, not structure
   vec3 maskColor = texture2D(ambientTexture, uv).rgb;
-  vec3 baseHsv = rgb2hsv(maskColor);
-  float hueSeed = baseHsv.x;
+  return vec4(maskColor, 1.0);
+  // vec3 baseHsv = rgb2hsv(maskColor);
+  // float hueSeed = baseHsv.x;
 
-  vec2 p = uv;
+  // vec2 p = uv;
 
-  // Multi scale Voronoi for cell boundaries
-  float v1 =
-      voronoi(p * 420.0 + vec2(uTime * 0.53, -uTime * 0.72)); // large cells
-  float v2 =
-      voronoi(p * 900.0 + vec2(uTime * 0.13, -uTime * 0.22)); // medium cells
-  float v3 = voronoi(p * 1520.0 +
-                     vec2(uTime * 0.13, -uTime * 0.22)); // animated micro cells
+  // // Multi scale Voronoi for cell boundaries
+  // float v1 =
+  //     voronoi(p * 420.0 + vec2(uTime * 0.53, -uTime * 0.72)); // large cells
+  // float v2 =
+  //     voronoi(p * 900.0 + vec2(uTime * 0.13, -uTime * 0.22)); // medium cells
+  // float v3 = voronoi(p * 1520.0 +
+  //                    vec2(uTime * 0.13, -uTime * 0.22)); // animated micro cells
 
-  // Convert Voronoi distances into bright vein edges
-  float veinsCoarse = 1.0 - smoothstep(0.14, 0.26, v1);
-  float veinsMedium = 1.0 - smoothstep(0.06, 0.16, v2);
-  float veinsFine = 1.0 - smoothstep(0.03, 0.09, v3);
+  // // Convert Voronoi distances into bright vein edges
+  // float veinsCoarse = 1.0 - smoothstep(0.14, 0.26, v1);
+  // float veinsMedium = 1.0 - smoothstep(0.06, 0.16, v2);
+  // float veinsFine = 1.0 - smoothstep(0.03, 0.09, v3);
 
-  // Dendritic fbm pattern to break symmetry and give branching
-  float dendritic = fbm(p * 9.0 + vec2(uTime * 0.05, uTime * 0.02));
-  dendritic = smoothstep(0.52, 0.75, dendritic);
+  // // Dendritic fbm pattern to break symmetry and give branching
+  // float dendritic = fbm(p * 9.0 + vec2(uTime * 0.05, uTime * 0.02));
+  // dendritic = smoothstep(0.52, 0.75, dendritic);
 
-  // Final vein mask, clamped to [0,1]
-  float veins =
-      clamp(veinsCoarse + 0.6 * veinsMedium + 0.4 * veinsFine + 0.9 * dendritic,
-            0.0, 1.0);
+  // // Final vein mask, clamped to [0,1]
+  // float veins =
+  //     clamp(veinsCoarse + 0.6 * veinsMedium + 0.4 * veinsFine + 0.9 * dendritic,
+  //           0.0, 1.0);
 
-  // Membrane interior  softer fill inside cells
-  float membrane = smoothstep(0.18, 0.75, v1);
+  // // Membrane interior  softer fill inside cells
+  // float membrane = smoothstep(0.18, 0.75, v1);
 
-  // Slow pigment blotches to avoid flat regions
-  float blotch = fbm(p * 3.0 + vec2(uTime * 0.03, -uTime * 0.02));
+  // // Slow pigment blotches to avoid flat regions
+  // float blotch = fbm(p * 3.0 + vec2(uTime * 0.03, -uTime * 0.02));
 
-  // High frequency micro noise for tiny texture
-  float micro = noise(p * 180.0 + uTime * 0.2);
-  float grain = noise(p * 260.0);
+  // // High frequency micro noise for tiny texture
+  // float micro = noise(p * 180.0 + uTime * 0.2);
+  // float grain = noise(p * 260.0);
 
-  // Hue is driven by mask plus structural variation
-  float h = hueSeed;
-  h += veins * 0.08;  // veins shift hue slightly
-  h -= blotch * 0.05; // blotches pull hue back
-  h = fract(h);
+  // // Hue is driven by mask plus structural variation
+  // float h = hueSeed;
+  // h += veins * 0.08;  // veins shift hue slightly
+  // h -= blotch * 0.05; // blotches pull hue back
+  // h = fract(h);
 
-  // Saturation drifts toward richer colors
-  float s = mix(baseHsv.y, 0.9, 0.7);
+  // // Saturation drifts toward richer colors
+  // float s = mix(baseHsv.y, 0.9, 0.7);
 
-  // Value is brighter along membranes and slightly modulated by blotches
-  float v = 0.70 + membrane * 0.25 + blotch * 0.05;
+  // // Value is brighter along membranes and slightly modulated by blotches
+  // float v = 0.70 + membrane * 0.25 + blotch * 0.05;
 
-  vec3 col = hsv2rgb(vec3(h, s, v));
+  // vec3 col = hsv2rgb(vec3(h, s, v));
 
-  // Apply structural shading
-  col *= mix(0.4, 2.0, veins); // veins pop as bright ridges
-  col *= 0.9 + micro * 0.2;    // micro variation
+  // // Apply structural shading
+  // col *= mix(0.4, 2.0, veins); // veins pop as bright ridges
+  // col *= 0.9 + micro * 0.2;    // micro variation
 
-  // Darken with grain to avoid neon look
-  col -= grain * 0.06;
+  // // Darken with grain to avoid neon look
+  // col -= grain * 0.06;
 
-  // Iridescence (Option B): angle-based thin-film shimmer
-  vec3 viewDir = normalize(vec3(0.0, 0.0, 1.0));
-  vec3 normalApprox = normalize(vec3(
-      noise(p * 220.0 + uTime * 0.1) - noise(p * 220.0 - uTime * 0.1),
-      noise(p * 180.0 - uTime * 0.15) - noise(p * 180.0 + uTime * 0.15), 0.15));
+  // // Iridescence (Option B): angle-based thin-film shimmer
+  // vec3 viewDir = normalize(vec3(0.0, 0.0, 1.0));
+  // vec3 normalApprox = normalize(vec3(
+  //     noise(p * 220.0 + uTime * 0.1) - noise(p * 220.0 - uTime * 0.1),
+  //     noise(p * 180.0 - uTime * 0.15) - noise(p * 180.0 + uTime * 0.15), 0.15));
 
-  float ndotv = clamp(dot(normalApprox, viewDir), 0.0, 1.0);
-  float film = sin((ndotv * 28.0) + uTime * 1.4) * 0.5 + 0.5;
+  // float ndotv = clamp(dot(normalApprox, viewDir), 0.0, 1.0);
+  // float film = sin((ndotv * 28.0) + uTime * 1.4) * 0.5 + 0.5;
 
-  vec3 iridA = hsv2rgb(vec3(fract(hueSeed + 0.10), 0.85, 1.00));
-  vec3 iridB = hsv2rgb(vec3(fract(hueSeed + 0.55), 0.90, 0.95));
+  // vec3 iridA = hsv2rgb(vec3(fract(hueSeed + 0.10), 0.85, 1.00));
+  // vec3 iridB = hsv2rgb(vec3(fract(hueSeed + 0.55), 0.90, 0.95));
 
-  vec3 iridescence = mix(iridA, iridB, film);
-  col = mix(col, iridescence, 0.28);
-  float px = 1.0 / 1024.0; // Increase/decrease for blur strength
-  vec3 blurred = blur9(ambientTexture, uv, px);
-  col = mix(col, blurred, 0.5);
-  return vec4(col, 1.0);
+  // vec3 iridescence = mix(iridA, iridB, film);
+  // col = mix(col, iridescence, 0.28);
+  // float px = 1.0 / 1024.0; // Increase/decrease for blur strength
+  // vec3 blurred = blur9(ambientTexture, uv, px);
+  // col = mix(col, blurred, 0.5);
+  // return vec4(col, 1.0);
 }
 
 // --------------------------------------------------------

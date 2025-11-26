@@ -33,9 +33,12 @@ export const mainSketch = (p) => {
     p.shared.assets.storyAssets['bg1'] = p.loadImage('./assets/created/raw/story_bg_1.png');
     p.shared.assets.storyAssets['bg2'] = p.loadImage('./assets/created/raw/story_bg_2.png');
     p.shared.assets.storyAssets['bg3'] = p.loadImage('./assets/created/raw/story_bg_3.png');
-    p.shared.assets.storyAssets['ssP1'] = p.loadImage('./assets/created/raw/pink_sprite_sheet_scaled.png');
-    p.shared.assets.storyAssets['ssY1'] = p.loadImage('./assets/created/raw/yellow_sprite_sheet_scaled.png');
-
+    p.shared.assets.storyAssets['ssheetPink'] = p.loadImage('./assets/created/raw/pink_sprite_sheet_scaled.png');
+    p.shared.assets.storyAssets['ssheetYellow'] = p.loadImage('./assets/created/raw/yellow_sprite_sheet_scaled.png');
+    p.shared.assets.storyAssets['ssheetLightening'] = p.loadImage('./assets/created/raw/lightening_scaled.png');
+    p.shared.assets.storyAssets['ssheetWaves'] = p.loadImage('./assets/created/raw/waves_scaled.png');
+    p.shared.assets.storyAssets['bgStorm'] = p.loadImage('./assets/created/raw/storm_bg_scaled.png');
+    p.shared.assets.storyAssets['bgStormTrans'] = p.loadImage('./assets/created/raw/storm_bg_trans_scaled.png');
     // p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
   };
 
