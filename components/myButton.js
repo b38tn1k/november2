@@ -45,6 +45,7 @@ export class MyButton {
     }
 
     mousePressed(px, py) {
+        // correctedMouseX, correctedMouseY
         // console.log('MyButton mousePressed at', px, py);
         // console.log('Button bounds:', this.x, this.x + this.w, this.y, this.y + this.h);
         if (this.contains(px, py) && this.onClick) {

@@ -7,7 +7,6 @@ export class ChapterScene extends BaseScene {
         super(p);
         this.title = null;
         this.levelLabels = opts.levels;
-        console.log('chapter levels', this.levelLabels);
     }
 
     init() {

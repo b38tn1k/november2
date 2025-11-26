@@ -35,6 +35,13 @@ export function createSceneManager(p) {
     },
 
     draw() {
+      // if (p.shared.isPortrait) {
+      //   p.shared.renderer.drawScene(() => {
+      //       p.background(p.shared.chroma.background);
+      //   });
+        
+      //   return;
+      // }
       if (this.current?.draw) this.current.draw(p);
     },
   };

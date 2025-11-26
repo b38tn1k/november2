@@ -83,14 +83,15 @@ export const mainSketch = (p) => {
     p.shared.sceneManager.register('menu', MenuScene);
     p.shared.sceneManager.register('story1', ArtSceneOne);
     p.shared.sceneManager.register('chapter1', ChapterScene, {levels: [1, 2, 3]});
-    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [4, 5]});
-    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [6, 7]});
-    p.shared.sceneManager.register('chapter4', ChapterScene, {levels: [8, 9]});
+    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [4, 5, 6]});
+    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [7, 8, 9]});
 
     p.shared.sceneManager.register('level1', Level1Scene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
     p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2, nextScene: 'level3', chapter: 'chapter1' });
     p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3, nextScene: 'level4', chapter: 'chapter1' });
-    p.shared.sceneManager.register('level4', Level1Scene, { level: p.shared.levels.testLevel, nextScene: 'menu', chapter: 'chapter2' });
+    p.shared.sceneManager.register('level4', Level1Scene, { level: p.shared.levels.level4, nextScene: 'level5', chapter: 'chapter2' });
+    p.shared.sceneManager.register('level5', Level1Scene, { level: p.shared.levels.level5, nextScene: 'level6', chapter: 'chapter2' });
+    p.shared.sceneManager.register('level6', Level1Scene, { level: p.shared.levels.level6, nextScene: 'menu', chapter: 'chapter2' });
     p.shared.sceneManager.continue = true;
 
     // p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu

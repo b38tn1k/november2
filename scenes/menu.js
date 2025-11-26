@@ -26,13 +26,14 @@ export class MenuScene extends BaseScene {
         const uiLayer = this.renderer.layers.uiLayer;
         const baseWidth = this.renderer.layers.uiLayer.width;
         const baseHeight = this.renderer.layers.uiLayer.height;
-        const baseSize = baseHeight / 6
+        const baseSize = Math.min(baseHeight / 6, baseWidth / 6);
         this.title.push(new WobbleText(
             this.p,
             font,
             "THE ANENOME",
             baseWidth / 2,   // x
-            baseHeight / 3 - baseSize * 1.3,  // y
+            // baseHeight / 3 - baseSize * 1.3,  // y
+            baseHeight / 3 - baseSize,  // y
             baseSize,   // size
             this.renderer.layers.entitiesLayer,
             {
@@ -45,7 +46,8 @@ export class MenuScene extends BaseScene {
             font,
             "OF MY",
             baseWidth / 2,   // x
-            baseHeight / 3 - baseSize * 0.8,  // y
+            // baseHeight / 3 - baseSize * 0.8,  // y
+            baseHeight / 3 - baseSize * 0.5,  // y
             baseSize / 2,   // size
             this.renderer.layers.entitiesLayer,
             {
@@ -59,7 +61,7 @@ export class MenuScene extends BaseScene {
             font,
             "ANEMONE",
             baseWidth / 2,   // x
-            baseHeight / 3 + baseSize / 2,  // y
+            baseHeight / 3 + (2*baseSize / 3),  // y
             baseSize * 1.6,   // size
             this.renderer.layers.entitiesLayer,
             {
@@ -71,10 +73,12 @@ export class MenuScene extends BaseScene {
 
     onResize(w, h) {
         super.onResize(w, h);
-        this.title.forEach(t => t.onResize?.(this.renderer.layers.entitiesLayer));
+        this.title = [];
+        this.createTextTitle();
+        // this.title.forEach(t => t.onResize?.(this.renderer.layers.entitiesLayer));
     }
 
-    addLevelButtons(labels = ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"]) {
+    addLevelButtons(labels = ["Chapter 1", "Chapter 2", "Chapter 3"]) {
         const layer = this.renderer.layers.uiLayer;
         const W = layer.width;
         const H = layer.height;

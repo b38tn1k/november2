@@ -15,24 +15,26 @@ function resizeHandler(p, cascade=true) {
   const screenW = window.innerWidth;
   const screenH = window.innerHeight;
 
-  let canvasW = screenW;
-  let canvasH = screenH;
+  // let canvasW, canvasH;
 
   if (isPortrait) {
-    // canvas buffer stays unrotated (so still width=screenW, height=screenH)
     p.shared.isPortrait = true;
+    // canvasW = screenH;
+    // canvasH = screenW;
     p.shared.Debug.log('system', '📱 Portrait mode detected');
   } else {
     p.shared.isPortrait = false;
+    // canvasW = screenW;
+    // canvasH = screenH;
     p.shared.Debug.log('system', '🖥️ Landscape mode detected');
   }
 
-  p.resizeCanvas(canvasW, canvasH);
-  applyCanvasStyles(p.shared.mainCanvas?.elt, {
-    screenW,
-    screenH,
-    portrait: p.shared.isPortrait,
-  });
+  p.resizeCanvas(screenW, screenH);
+  // applyCanvasStyles(p.shared.mainCanvas?.elt, {
+  //   screenW,
+  //   screenH,
+  //   portrait: p.shared.isPortrait,
+  // });
 
   p.shared.viewport = { width: screenW, height: screenH };
   if (cascade) {
@@ -66,14 +68,10 @@ function applyCanvasStyles(canvasElt, { screenW, screenH, portrait }) {
   if (portrait) {
     s.transform = 'rotate(90deg)';
     s.transformOrigin = 'top left';
-    s.width = `${screenH}px`; // swapped visually
-    s.height = `${screenW}px`;
     s.translate = `${screenW}px 0`;
   } else {
     s.transform = '';
     s.transformOrigin = '';
-    s.width = `${screenW}px`;
-    s.height = `${screenH}px`;
     s.translate = '0';
   }
 }

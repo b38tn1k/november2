@@ -9,6 +9,11 @@ import { Grass } from '../entities/grass.js';
 import { Friend } from '../entities/friend.js';
 import { Spikes } from '../entities/spikes.js';
 
+const PLAYING = 0;
+const COMPLETED = 1;
+const FAILED = 2;
+
+
 export class BaseScene {
   constructor(p, opts = {}) {
     this.p = p;
@@ -27,9 +32,11 @@ export class BaseScene {
     this.nextScene = opts.nextScene || null;
     this.levelGoal = {};
     this.useTextureLayer = 1.0;
+    this.gameState = PLAYING;
   }
 
   init() {
+    this.gameState = PLAYING;
     this.Debug.log('level', `📜 ${this.constructor.name} initialized`);
     this.sceneFrameCount = 0;
     const player = this.p.shared.player;
@@ -156,12 +163,7 @@ export class BaseScene {
     if (player.worldPos.x - this.levelGoal.x < 1.0 && player.worldPos.x - this.levelGoal.x > -1.0 &&
       player.worldPos.y - this.levelGoal.y < 1.0 && player.worldPos.y - this.levelGoal.y > -1.0) {
       this.Debug.log('level', 'Level complete!');
-      if (this.nextScene) {
-        this.p.shared.sceneManager.change(this.nextScene);
-      } else {
-        this.Debug.log('level', 'No next scene defined.');
-      }
-      this.Debug.log('level', 'No next scene defined.');
+      this.gameState = COMPLETED;
     }
     for (const entity of this.entities) {
       if (!entity.hazard) continue;
@@ -169,11 +171,15 @@ export class BaseScene {
       if (entity.checkCollisionWithPlayer?.(player)) {
         // console.warn('⚠️ Player hit hazard:', entity);
         player.onHazard?.(entity);
+        if (player.health <= 0) {
+          this.gameState = FAILED;
+        }
       }
     }
   }
 
   update() {
+
     const r = this.p.shared.renderer;
     const player = this.p.shared.player;
     const dt = this.p.shared.timing.delta;
@@ -182,6 +188,35 @@ export class BaseScene {
 
     this.recentlyChangedScene = (this.sceneFrameCount - this.lastSceneChangeFrameNumber) < 5;
 
+    switch (this.gameState) {
+      case PLAYING:
+        this.updateGame(r, player, dt);
+        break;
+      case COMPLETED:
+        if (this.nextScene) {
+          this.p.shared.sceneManager.change(this.nextScene);
+        } else {
+          this.Debug.log('level', 'No next scene defined.');
+        }
+        this.Debug.log('level', 'No next scene defined.');
+        break;
+      case FAILED:
+        this.cleanup();
+        this.init();
+        // const spawnWorld = {
+        //   x: this.levelData.spawn.x + 0.5,
+        //   y: this.levelData.spawn.y + 0.5
+        // };
+        // player.reset(spawnWorld);
+        break;
+    }
+
+    this.updateGame(r, player, dt);
+
+    return [r, player, dt];
+  }
+
+  updateGame(r, player, dt) {
     this.positionChecking(player);
 
     // 1. apply entity forces
@@ -235,8 +270,6 @@ export class BaseScene {
         entity.postPhysics(dt);
       }
     }
-
-    return [r, player, dt];
   }
 
   registerUI(element) {
@@ -293,8 +326,9 @@ export class BaseScene {
   }
 
   onMousePressed(x, y) {
-    // above was an attempt at converting to internal coords, fails on portrait, also think it shouldnt live here - should live in renderer
-    let [internalX, internalY] = this.renderer.toLayerCoords('uiLayer', x, y);
+    // let [internalX, internalY] = this.renderer.toLayerCoords('uiLayer', x, y);
+    let internalX = this.p.correctedMouseX;
+    let internalY = this.p.correctedMouseY;
 
     this.Debug.log('level', 'BaseScene onMousePressed at:', x, y, '-> internal:', internalX, internalY);
     for (const el of this.uiElements) {
@@ -302,8 +336,25 @@ export class BaseScene {
     }
   }
 
+  onTouchStarted(x, y) {
+    let internalX = this.p.correctedMouseX;
+    let internalY = this.p.correctedMouseY;
+
+    this.Debug.log('level', 'BaseScene onMousePressed at:', x, y, '-> internal:', internalX, internalY);
+    for (const el of this.uiElements) {
+      if (el.mousePressed?.(internalX, internalY)) return;   // allow UI to consume the click
+    }
+
+  }
+
   draw() {
     this.sceneFrameCount++;
+
+    // this.renderer.layers.uiLayer.fill(255);
+    // this.renderer.layers.uiLayer.circle(this.p.mouseX, this.p.mouseY, 25); // DEBUG: show mouse position
+    // this.renderer.layers.uiLayer.fill(255, 0, 0);
+    // this.renderer.layers.uiLayer.circle(this.p.correctedMouseX, this.p.correctedMouseY, 25); // DEBUG: show mouse position
+
     if (this.renderer.layerDirty.uiLayer) {
       const uiLayer = this.renderer.layers.uiLayer;
       for (const el of this.uiElements) {

@@ -41,6 +41,8 @@ export class Spikes extends BaseEntity {
             // wider base (centered horizontally)
             g.vertex(8, 60);     // x=32-24
             g.vertex(12, 64);     // x=32-24
+            g.vertex(22, 54);     // x=32-24
+            g.vertex(32, 58);     // x=32-24
             g.vertex(52, 64);    // x=32+24
             g.vertex(56, 60);    // x=32+24
 
@@ -65,6 +67,7 @@ export class Spikes extends BaseEntity {
             // wider base (centered horizontally)
             g.vertex(8, 54);     // x=32-24
             g.vertex(24, 64);     // x=32-24
+            g.vertex(28, 64);     // x=32-24
             g.vertex(32, 48);     // x=32-24
             g.vertex(56, 54);    // x=32+24
 

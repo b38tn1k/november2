@@ -23,6 +23,27 @@ export async function registerControls(p) {
     const player = p.shared?.player;
     const handlers = [scene, player];
 
+    // const rect = p.shared.mainCanvas.elt.getBoundingClientRect();
+    // const localX = p.mouseX - rect.left;
+    // const localY = p.mouseY - rect.top;
+    p.correctedMouseX = p.mouseX;
+    p.correctedMouseY = p.mouseY;
+
+    // if (p.shared.isPortrait) {
+    //   p.correctedMouseX = localY;
+    //   p.correctedMouseY = p.width - localX;
+    // } else {
+    //   p.correctedMouseX = localX;
+    //   p.correctedMouseY = localY;
+    // }
+
+    if (eventName === 'onTouchStarted' || eventName === 'onTouchEnded') {
+      const sinkKeys = p.shared.controls.map.sink;  // array
+      const sinkKey = sinkKeys[0];                  // string, e.g. "s"
+      key = sinkKey;
+      keyCode = sinkKey.charCodeAt(0);
+    }
+
     // find which actions this key belongs to
     const actions = Object.entries(p.shared.controls.map)
       .filter(([_, keys]) => keys.includes(key))
@@ -36,9 +57,9 @@ export async function registerControls(p) {
 
       // mapped action events
       for (const action of actions) {
-        if (eventName === 'onKeyPressed')
+        if (eventName === 'onKeyPressed' || eventName === 'onTouchStarted')
           handler.onActionStart?.(action);
-        if (eventName === 'onKeyReleased')
+        if (eventName === 'onKeyReleased' || eventName === 'onTouchEnded')
           handler.onActionEnd?.(action);
       }
     }
