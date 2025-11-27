@@ -7,7 +7,8 @@ export class MyButton {
         this.designHeight = layer.height;
         this.label = label;
         this.onClick = onClick;
-        this.fontSize = 1.5 * Math.min((this.w / this.label.length) * 0.8, 64);
+        // this.fontSize = 1.5 * Math.min((this.h / this.label.length) * 0.8, 64);
+        this.fontSize = 1.5 * Math.min(this.h* 0.8, 64);
         this.p = p;
         this.backgroundColor = this.p.shared.chroma.terrain;
         this.fontColor = p.color(0);
@@ -154,7 +155,8 @@ export class MyButton {
             this.organicShape = [];
         }
 
-        this.fontSize = 1.5 * Math.min((this.w / this.label.length) * 0.8, 64);
+        // this.fontSize = 1.5 * Math.min((this.w / this.label.length) * 0.8, 64);
+        this.fontSize = 1.5 * Math.min(this.h* 0.8, 64);
 
         // console.log("Layer Size", layer.width, layer.height);
         // console.log('MyButton onResize to', this.x, this.y, this.w, this.h);
