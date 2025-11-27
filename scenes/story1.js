@@ -187,7 +187,9 @@ export class ArtSceneOne extends BaseScene {
     onResize(w, h) {
         super.onResize(w, h);
         this.title = [];
-        this.borderGraphic.resize(w, h);
+        this.borderGraphic.resizeCanvas(w, h);
+        this.borderGraphic.clear();
+        this.drawOrganicBorder(this.borderGraphic);
         // this.createTextTitle();
         // this.title.forEach(t => t.onResize?.(this.renderer.layers.entitiesLayer));
     }
