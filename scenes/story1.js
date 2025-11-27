@@ -184,6 +184,14 @@ export class ArtSceneOne extends BaseScene {
         layer.pop();
     }
 
+    onResize(w, h) {
+        super.onResize(w, h);
+        this.title = [];
+        this.borderGraphic.resize(w, h);
+        // this.createTextTitle();
+        // this.title.forEach(t => t.onResize?.(this.renderer.layers.entitiesLayer));
+    }
+
     init() {
         this.levelData = this.p.shared.parseLevel(this.p.shared.levels.menu, this.p);
         const [r, player] = super.init();

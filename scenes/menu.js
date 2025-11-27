@@ -23,7 +23,7 @@ export class MenuScene extends BaseScene {
         this.friend.deactivate();
 
         this.title = [];
-        this.createTextTitle();
+        // this.createTextTitle();
         this.addLevelButtons();
         r.reset();
     }
@@ -81,7 +81,7 @@ export class MenuScene extends BaseScene {
     onResize(w, h) {
         super.onResize(w, h);
         this.title = [];
-        this.createTextTitle();
+        // this.createTextTitle();
         // this.title.forEach(t => t.onResize?.(this.renderer.layers.entitiesLayer));
     }
 
@@ -190,6 +190,40 @@ export class MenuScene extends BaseScene {
             for (const entity of this.entities) {
                 entity.draw(layers.entitiesLayer, layers.ambientTexture);
             }
+            layers.entitiesLayer.fill(this.p.shared.chroma.player);
+            layers.entitiesLayer.noStroke();
+            layers.entitiesLayer.textAlign(layers.entitiesLayer.CENTER, layers.entitiesLayer.CENTER);
+            layers.uiLayer.noFill();
+            layers.uiLayer.stroke(0);
+            layers.uiLayer.textAlign(layers.uiLayer.CENTER, layers.uiLayer.CENTER);
+
+            let textSize = layers.uiLayer.width/10;
+            layers.entitiesLayer.textSize(textSize);
+            layers.uiLayer.textSize(textSize);
+
+            const textX = layers.uiLayer.width / 2;
+            let anchory = layers.uiLayer.height / 12;
+
+            layers.entitiesLayer.text("THE ANEMONE", textX, anchory);
+            layers.uiLayer.text("THE ANEMONE", textX, anchory);
+
+            anchory += layers.uiLayer.height / 8;
+
+            textSize = layers.uiLayer.width/15;
+            layers.entitiesLayer.textSize(textSize);
+            layers.uiLayer.textSize(textSize);
+
+            layers.entitiesLayer.text("OF MY", textX, anchory);
+            layers.uiLayer.text("OF MY", textX, anchory);
+            anchory += layers.uiLayer.height / 8;
+
+            textSize = layers.uiLayer.width/7;
+            layers.entitiesLayer.textSize(textSize);
+            layers.uiLayer.textSize(textSize);
+            
+            layers.entitiesLayer.text("ANEMONE", textX, anchory);
+            layers.uiLayer.text("ANEMONE", textX, anchory);
+
             super.draw();
         });
     }

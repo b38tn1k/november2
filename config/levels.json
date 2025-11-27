@@ -622,18 +622,18 @@
         "....................E"
       ],
       "currents": [
-        "bbbbbbbbbbbbbdddddddd",
-        "cccccccbbbbbbbddddddd",
-        "ccccccbbbbbbbbbdddddd",
-        "cccccc.........dddddd",
-        "cccccc.........dddddd",
-        "cccccc.........dddddd",
-        "cccccc.........dddddd",
-        "cccccc.........dddddd",
-        "cccccc.........dddddd",
-        "ccccccaaaaaaaaadddddd",
-        "cccccccccaaaaaaaaaadd",
-        "ccaaaaaaaaaaaaaaaaaaa"
+        "idddddddddddddddddddj",
+        "bicccccbbbbbbbdddddja",
+        "bcccccbbbbbbbbbddddda",
+        "bccccc.........ddddda",
+        "bccccc.........ddddda",
+        "bccccc.........ddddda",
+        "bccccc.........ddddda",
+        "bccccc.........ddddda",
+        "bccccc.........ddddda",
+        "bcccccaaaaaaaaaddddda",
+        "blcccccccaaaaaaaaaaka",
+        "lcaaaaaaaaaaaaaaaaaak"
       ],
       "hazards": [
         ".....................",
@@ -691,6 +691,30 @@
       "d": {
         "dx": 0,
         "dy": 5,
+        "style": "current",
+        "params": {}
+      },
+      "i": {
+        "dx": 5,
+        "dy": 5,
+        "style": "current",
+        "params": {}
+      },
+      "j": {
+        "dx": -5,
+        "dy": 5,
+        "style": "current",
+        "params": {}
+      },
+      "k": {
+        "dx": -5,
+        "dy": -5,
+        "style": "current",
+        "params": {}
+      },
+      "l": {
+        "dx": 5,
+        "dy": -5,
         "style": "current",
         "params": {}
       }

@@ -38,12 +38,12 @@ export class ChapterScene extends BaseScene {
         const W = layer.width;
         const H = layer.height;
 
-        const rowWidth = W * 0.5;          // row = 1/3 total width
-        const btnHeight = H * 0.20;         // 10% screen height
+        const rowWidth = W * 0.85;          // row = 1/3 total width
+        const btnHeight = H * 0.07;         // 10% screen height
         const y = H /2 - btnHeight;                // bottom third
 
         const count = this.levelLabels.length;
-        const padding = rowWidth * 0.05;    // 5% relative internal spacing
+        const padding = rowWidth * 0.1;    // 5% relative internal spacing
         const totalPadding = padding * (count - 1);
 
         const availableWidth = rowWidth - totalPadding;
