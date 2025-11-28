@@ -24,6 +24,7 @@ export class Level1Scene extends BaseScene {
             this.registerEntity(coral);
         }
         this.addInGameMenuButtons();
+        this.sortEntitiesToRenderOrder();
     }
 
     update() {

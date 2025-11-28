@@ -1,13 +1,14 @@
 import { BaseEntity } from '../core/BaseEntity.js';
+import {generateFish} from './fishGenerator.js';
 
 const BODY_RADIUS = 0.4;
 const BODY_MASS = 2;
 
 
 export class PathFollower extends BaseEntity {
-    constructor(p) {
+    constructor(p, opts = {}) {
         super(p);
-        this.size = 1.0;
+        this.size = 2.6;
         this.pxSize = 1;
         this.speed = p.shared.settings.enemySpeed;
         this.sinkancy = p.shared.settings.ambientSinkancy;
@@ -15,7 +16,8 @@ export class PathFollower extends BaseEntity {
         this.restlessness = p.random() * 3 + 1;
         this.color = p.shared.chroma.enemy;
         this.visible = true;
-        this.hazard = true;
+        this.hazard = opts.hazard;
+        // console.log(this.hazard, opts);
 
         this.mainPhysicsParticle = this.createPhysicsParticle(
             0, 0,      // x,y
@@ -34,6 +36,24 @@ export class PathFollower extends BaseEntity {
 
         this.worldPos.x = 0;
         this.worldPos.y = 0;
+
+        this.shapeTexture = p.createGraphics(128, 128);
+        this.shapeTexture.pixelDensity(1);
+        this.shapeTexture.noSmooth();
+        this.shapeTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+
+        this.colorTexture = p.createGraphics(128, 128);
+        this.colorTexture.pixelDensity(1);
+        this.colorTexture.noSmooth();
+        this.colorTexture.elt.getContext('2d').imageSmoothingEnabled = false;
+
+        if (this.hazard) {
+            generateFish(p, this.shapeTexture, this.colorTexture, p.shared.chroma.ambient, p.shared.chroma.enemy);
+        } else {
+            generateFish(p, this.shapeTexture, this.colorTexture, p.shared.chroma.ambient, p.shared.chroma.ambient);
+        }
+
+        
     }
 
     addToPath(point) {
@@ -152,6 +172,7 @@ export class PathFollower extends BaseEntity {
     }
 
     checkCollisionWithPlayer(player) {
+        if (this.hazard === false) return false;
         const box = this.getAABB?.();
         if (!box) return false;
         if (player.physicsParticles && player.physicsParticles.length > 0) {
@@ -197,11 +218,12 @@ export class PathFollower extends BaseEntity {
         const dims = Math.floor(this.pxSize);
         layer.noStroke();
         layer.fill(this.color);
-        layer.circle(x, y, dims);
+        // layer.circle(x, y, dims);
+        layer.image(this.shapeTexture, x, y, dims, dims);
 
         texture.noStroke();
         texture.fill(this.color);
-        texture.circle(x, y, dims);
+        texture.image(this.colorTexture, x, y, dims, dims);
 
         // if (this.p.frameCount % 30 === 0) {
         //     console.log("Drawing PathFollower at:", this.worldPos, x, y);

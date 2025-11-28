@@ -874,7 +874,7 @@
       },
       "I": {
         "type": "pathFollower",
-        "hazard": true
+        "hazard": false
       },
       "g": {
         "type": "grass",

@@ -9,7 +9,7 @@ export function createGameState() {
 
     togglePause() {
       this.paused = !this.paused;
-      console.log(this.paused ? "⏸️ Paused" : "▶️ Resumed");
+      // console.log(this.paused ? "⏸️ Paused" : "▶️ Resumed");
     },
   };
 

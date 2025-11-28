@@ -55,7 +55,7 @@ export async function createRenderer(p) {
     base: null,
 
     async init() {
-      console.log(p.width, p.height);
+      // console.log(p.width, p.height);
       if (p.height < 640) {
         p.shared.isPortrait = true;
         p.shared.settings.graphicsScaling = 1;

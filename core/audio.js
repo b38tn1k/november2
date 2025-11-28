@@ -23,8 +23,8 @@ export function createAudioManager(p) {
 
         play(name, opts = {}) {
             const s = tracks[name];
-            console.log('before play:', s.getVolume(), s.isPlaying());
-            console.log('AudioManager: play', name, opts, s);
+            // console.log('before play:', s.getVolume(), s.isPlaying());
+            // console.log('AudioManager: play', name, opts, s);
             if (!s) return;
             if (opts.stopOthers) {
                 Object.values(tracks).forEach(t => { if (t.isPlaying()) t.stop(); });
@@ -32,7 +32,7 @@ export function createAudioManager(p) {
             if (!s.isPlaying()) {
                 s.play();
             }
-            console.log('after play:', s.getVolume(), s.isPlaying());
+            // console.log('after play:', s.getVolume(), s.isPlaying());
         },
 
         stop(name, opts = {}) {

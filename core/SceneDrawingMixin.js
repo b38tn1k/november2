@@ -48,7 +48,7 @@ export const SceneDrawingMixin = {
   },
 
   drawWorldGrid(layer) {
-    console.log(this.mapTransform);
+    // console.log(this.mapTransform);
     const pix = this.mapTransform.tileSizePx;
     const og = this.mapTransform.originPx;
     layer.noFill();

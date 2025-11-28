@@ -47,6 +47,7 @@ export class BaseScene {
     const player = this.p.shared.player;
     this.padding = this.calculatePadding();
     if (this.levelData) {
+      // console.log(this.levelData);
       this.physicsWorld = new PhysicsWorld({
         getTile: this.getTile.bind(this),
         restitution: 0.2,
@@ -63,9 +64,9 @@ export class BaseScene {
       player.setScene(this);
       this.levelData = generateCurrents(this.levelData, this.p);
 
-// i want to do a kernel based blur of currents here, only for levelDefinitionsCurrents, and only impacting leveldefinitino currents also
-// should be still weightabl to towards the original value, but make some conisderation to the 8 surrounding cells, and their dx dy values averaged
-// like a little bit of a smoothing filter I guess with a 3x3 kernal, but averaging only based on the number of curretns in the 3x3 that are level defining... make sense?
+      // i want to do a kernel based blur of currents here, only for levelDefinitionsCurrents, and only impacting leveldefinitino currents also
+      // should be still weightabl to towards the original value, but make some conisderation to the 8 surrounding cells, and their dx dy values averaged
+      // like a little bit of a smoothing filter I guess with a 3x3 kernal, but averaging only based on the number of curretns in the 3x3 that are level defining... make sense?
       // --- 3x3 kernel smoothing for levelDefinitionCurrent only ---
       const smoothed = [];
       const lookup = new Map();
@@ -147,7 +148,7 @@ export class BaseScene {
             let newLegend = entity.legend + "_pathfollower";
             let res = this.getEntity(newLegend);
             if (res === null) {
-              res = new PathFollower(this.p);
+              res = new PathFollower(this.p, entity);
               this.registerEntity(res);
             }
             res.legend = newLegend;
@@ -224,8 +225,15 @@ export class BaseScene {
   }
 
   sortEntitiesToRenderOrder() {
-    //todo
+    // HACK Move all Grass instances to the END of this.entities
+    this.entities.sort((a, b) => {
+      const aGrass = a instanceof Grass;
+      const bGrass = b instanceof Grass;
 
+      if (aGrass && !bGrass) return 1;   // a after b
+      if (!aGrass && bGrass) return -1;  // a before b
+      return 0;                          // keep existing order otherwise
+    });
   }
 
   positionChecking(player) {
