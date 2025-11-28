@@ -8,7 +8,7 @@ const BODY_MASS = 2;
 export class PathFollower extends BaseEntity {
     constructor(p, opts = {}) {
         super(p);
-        this.size = 2.6;
+        this.size = .9;
         this.pxSize = 1;
         this.speed = p.shared.settings.enemySpeed;
         this.sinkancy = p.shared.settings.ambientSinkancy;
@@ -202,7 +202,7 @@ export class PathFollower extends BaseEntity {
 
     // simple AABB for hit detection, tile-sized
     getAABB() {
-        const half = this.size / 2;
+        const half = this.size;
         return {
             x: this.worldPos.x - half,
             y: this.worldPos.y - half,
@@ -221,13 +221,12 @@ export class PathFollower extends BaseEntity {
             const playerDx = player.worldPos.x - this.worldPos.x;
             const playerDy = player.worldPos.y - this.worldPos.y;
             const playerDist = Math.sqrt(playerDx * playerDx + playerDy * playerDy);
-            console.log("Player distance:", playerDist.toFixed(2));
             if (playerDist > 1.0) {
                 this.playerAngle = Math.atan2(playerDy, playerDx);
             }
         }
 
-        const dims = Math.floor(this.pxSize);
+        const dims = 2 * Math.floor(this.pxSize);
 
         layer.push();
         layer.translate(x, y);
