@@ -97,4 +97,15 @@ export function registerSystemEvents(p) {
 
   window.addEventListener('focus', () => p.onWindowFocus?.());
   window.addEventListener('blur', () => p.onWindowBlur?.());
+  document.addEventListener("visibilitychange", () => {
+    const ctx = p.getAudioContext();
+
+    if (document.hidden) {
+      ctx.suspend();
+      p.shared.Debug?.log("audio", "Audio suspended due to tab hide");
+    } else {
+      ctx.resume();
+      p.shared.Debug?.log("audio", "Audio resumed due to tab focus");
+    }
+  });
 }

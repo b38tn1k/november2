@@ -1,24 +1,60 @@
 export function createAudioManager(p) {
     const tracks = {};
+    let themeFilter = null;
+    let themeFiltered = false;
 
     return {
+        cancelTweensFor(obj, setter = null) {
+            if (!p.shared || !p.shared.tweens) return;
+            const tweens = p.shared.tweens;
+            for (let i = tweens.length - 1; i >= 0; i--) {
+                const t = tweens[i];
+                if (t.obj === obj && (setter === null || t.setter === setter)) {
+                    tweens.splice(i, 1);
+                }
+            }
+        },
+
         register(name, sound) {
             tracks[name] = sound;
         },
 
-        fadeIn(name, duration = 50) {
+        fadeIn(name, duration = 300) {
             const s = tracks[name];
             if (!s) return;
-            s.setVolume(0);
-            s.play();
-            p.tween(s, 'volume', 1, duration);
+
+            this.cancelTweensFor(s, 'setVolume');
+
+            if (!s.isPlaying()) {
+                s.setVolume(0);
+                s.play();
+            }
+
+            p.shared.tween(s, 'setVolume', 1, duration);
         },
 
-        fadeOut(name, duration = 50) {
+        fadeOut(name, duration = 300) {
             const s = tracks[name];
             if (!s) return;
-            const startVol = s.getVolume();
-            p.tween(s, 'volume', 0, duration, () => s.stop());
+
+            this.cancelTweensFor(s, 'setVolume');
+
+            if (!s.isPlaying()) {
+                s.stop();
+                return;
+            }
+
+            p.shared.tween(
+                s,
+                'setVolume',
+                0,
+                duration,
+                () => {
+                    s.setVolume(0);
+                    s.stop();
+                    this.cancelTweensFor(s, 'setVolume');
+                }
+            );
         },
 
         play(name, opts = {}) {
@@ -27,23 +63,109 @@ export function createAudioManager(p) {
             // console.log('AudioManager: play', name, opts, s);
             if (!s) return;
             if (opts.stopOthers) {
-                Object.values(tracks).forEach(t => { if (t.isPlaying()) t.stop(); });
+                Object.entries(tracks).forEach(([otherName, otherTrack]) => {
+                    if (otherName === name) return;
+                    if (otherTrack.isPlaying()) {
+                        this.stop(otherName);
+                    }
+                });
             }
+            // if (!s.isPlaying()) {
+            //     s.play();
+            // }
             if (!s.isPlaying()) {
+                this.cancelTweensFor(s, 'setVolume');
+                s.setVolume(0);
                 s.play();
+
+                if (name === 'theme') { // hacky but lazy 
+                    s.setLoop(true);
+                }
+
+                p.shared.tween(s, 'setVolume', 1, 400);
             }
             // console.log('after play:', s.getVolume(), s.isPlaying());
         },
 
+        enableThemeFilter() {
+            // console.log('AudioManager: enableThemeFilter');
+            const s = tracks['theme'];
+            if (!s) return;
+
+            // create and install filter once
+            if (!themeFilter) {
+                themeFilter = new p5.LowPass();
+                themeFilter.freq(20000);        // wide open initially
+
+                s.disconnect();
+                s.connect(themeFilter);
+                themeFilter.connect(p5.soundOut);
+
+                // Force WebAudio graph stabilization
+                try {
+                    const ctx = p.getAudioContext();
+                    if (ctx.state === 'suspended') ctx.resume();
+                } catch (e) {
+                    console.warn("AudioCtx resume failed:", e);
+                }
+            }
+
+            // Ensure routing remains intact after play() calls
+            if (!s.output || !themeFilter) {
+                s.disconnect();
+                s.connect(themeFilter);
+            }
+
+            // smooth transition to muffled underwater sound
+            p.shared.tween(
+                themeFilter,
+                'freq',
+                500,       // target cutoff
+                1000       // duration ms
+            );
+
+            themeFiltered = true;
+        },
+
+        disableThemeFilter() {
+            // console.log('AudioManager: disableThemeFilter');
+            const s = tracks['theme'];
+            if (!s) return;
+
+            // Ensure filter node is still valid
+            if (!themeFilter) return;
+            if (!s.output) {
+                s.disconnect();
+                s.connect(themeFilter);
+            }
+
+            // smooth transition back to full clarity
+            p.shared.tween(
+                themeFilter,
+                'freq',
+                20000,     // fully open
+                1000
+            );
+
+            themeFiltered = false;
+        },
+
         stop(name, opts = {}) {
             const s = tracks[name];
+            // if (s && s.isPlaying()) {
+            //     s.stop();
+            // }
             if (s && s.isPlaying()) {
-                s.stop();
+                p.shared.tween(s, 'setVolume', 0, 400, () => s.stop());
             }
         },
 
         stopAll() {
-            Object.values(tracks).forEach(s => { if (s.isPlaying()) s.stop(); });
+            Object.entries(tracks).forEach(([name, s]) => {
+                if (s && s.isPlaying()) {
+                    this.stop(name);
+                }
+            });
         },
 
         warmAll() {

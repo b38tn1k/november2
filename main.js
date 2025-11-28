@@ -28,6 +28,56 @@ export const mainSketch = (p) => {
   p.shared = {};
   p.shared.assets = {};
 
+  p.shared.tweens = [];
+
+  p.shared.tween = function (obj, setter, target, duration = 300, onFinish = null) {
+    let startValue;
+
+    // Unified getter resolution
+    const fn = obj[setter];
+    if (typeof fn === 'function') {
+      // Handle known p5.sound getters
+      if (setter === 'setVolume') {
+        startValue = obj.getVolume();
+      } else if (setter === 'freq') {
+        startValue = obj.freq();
+      } else if (setter === 'pan') {
+        startValue = obj.getPan();
+      } else if (setter === 'setRate') {
+        startValue = obj.getRate();
+      } else {
+        console.warn('Tween: Unknown setter:', setter);
+        return;
+      }
+
+      // Normalize AudioParam-like wrappers
+      if (startValue && typeof startValue === 'object' && typeof startValue.value === 'number') {
+        startValue = startValue.value;
+      }
+
+    } else {
+      // numeric property
+      startValue = obj[setter];
+    }
+
+    if (!isFinite(startValue)) {
+      console.warn('Tween: startValue is non-finite for', obj, setter, startValue);
+      return;
+    }
+
+    const startTime = p.millis();
+
+    p.shared.tweens.push({
+      obj,
+      setter,
+      startValue,
+      target,
+      duration,
+      startTime,
+      onFinish
+    });
+  };
+
   p.preload = () => {
     // p.shared.mainFont = p.loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf');
     // p.shared.mainFont = p.loadFont('./assets/found/Patrick_Hand/PatrickHand-Regular.ttf');
@@ -51,6 +101,7 @@ export const mainSketch = (p) => {
     p.shared.assets.audio['story2'] = p.loadSound('./assets/created/anemone_script2.mp3');
     p.shared.assets.audio['noise_wave'] = p.loadSound('./assets/created/noise_wave.mp3');
     p.shared.assets.audio['ohno'] = p.loadSound('./assets/created/ohno.mp3');
+    p.shared.assets.audio['theme'] = p.loadSound('./assets/created/meadowhawk.mp3');
 
     // p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
   };
@@ -98,6 +149,8 @@ export const mainSketch = (p) => {
     p.shared.audio.register('story2', p.shared.assets.audio['story2']);
     p.shared.audio.register('noise_wave', p.shared.assets.audio['noise_wave']);
     p.shared.audio.register('ohno', p.shared.assets.audio['ohno']);
+    p.shared.audio.register('theme', p.shared.assets.audio['theme']);
+    // p5.soundOut.output.gain.value = 0;   // mute immediately
     p.userStartAudio();
     p.shared.audio.warmAll();
 
@@ -131,12 +184,42 @@ export const mainSketch = (p) => {
     initializeCanvasPostSetup(p);
     document.getElementById('landing_fg').style.opacity = '0';
     p.shared.mainCanvas.class('ready');
+
+    p.shared.audio.enableThemeFilter();
+    p.shared.audio.disableThemeFilter();
+    p.shared.audio.disableThemeFilter();
+    p.shared.audio.disableThemeFilter();
   };
 
   p.draw = () => {
     // if (p.shared.sceneManager.continue) {
     p.shared.timing.update();
     // }
+
+    for (let i = p.shared.tweens.length - 1; i >= 0; i--) {
+      const t = p.shared.tweens[i];
+      const now = p.millis();
+      const elapsed = now - t.startTime;
+
+      const u = Math.min(elapsed / t.duration, 1);
+      const value = p.lerp(t.startValue, t.target, u);
+
+      // apply new value
+      const fn = t.obj[t.setter];
+
+      if (typeof fn === 'function') {
+        // p5.sound unified setter call
+        fn.call(t.obj, value);
+      } else {
+        // plain numeric assignment
+        t.obj[t.setter] = value;
+      }
+
+      if (u >= 1) {
+        if (t.onFinish) t.onFinish();
+        p.shared.tweens.splice(i, 1);
+      }
+    }
 
 
     const { renderer, sceneManager } = p.shared;

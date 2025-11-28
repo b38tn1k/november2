@@ -377,6 +377,7 @@ export class ArtSceneOne extends BaseScene {
         // deactivate actors if needed
         // this.friend?.deactivate?.();
         // this.p.shared.player?.deactivate?.();
+        this.p.shared.audio.play('theme');
 
         super.cleanup();
     }

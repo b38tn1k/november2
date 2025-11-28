@@ -26,6 +26,7 @@ export class MenuScene extends BaseScene {
         // this.createTextTitle();
         this.addLevelButtons();
         r.reset();
+        this.p.shared.audio.play('theme');
     }
 
     createTextTitle() {

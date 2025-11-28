@@ -136,11 +136,17 @@ export class Player extends BaseEntity {
             this.ready = true;
         }
         this.Debug?.log('player', `Started ${action}`);
+        if (action === 'sink') {
+            this.p.shared.audio.enableThemeFilter();
+        }
     }
 
     onActionEnd(action) {
         if (this.moving[action] !== undefined) this.moving[action] = false;
         this.Debug?.log('player', `Ended ${action}`);
+        if (action === 'sink') {
+            this.p.shared.audio.disableThemeFilter();
+        }
     }
 
     applyForces(dt) {
