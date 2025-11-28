@@ -161,6 +161,10 @@ export class MenuScene extends BaseScene {
 
     onKeyPressed(key, keyCode) {
         super.onKeyPressed(key, keyCode);
+        // this.p.shared.sceneManager.change('jsonInput');
+
+        this.p.shared.sceneManager.change('levelPainter');
+        
         // this.p.shared.sceneManager.change('level1');
         // this.p.shared.sceneManager.change('test');
         // this.p.shared.sceneManager.change('endStory');
@@ -234,5 +238,9 @@ export class MenuScene extends BaseScene {
         this.p.shared.ui.show();
         super.cleanup();
         this.title = null;
+        this.renderer.markDirty('backgroundLayer');
+        this.renderer.markDirty('uiLayer');
+        this.renderer.markDirty('entitiesLayer');
+        this.renderer.markDirty('uiLayer');
     }
 }

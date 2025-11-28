@@ -9,7 +9,7 @@ import { Debug } from './core/debug.js';
 import { createUI } from './core/ui.js';
 import { Settings } from './config/settings.js';
 import { parseLevel } from './core/parseLevel.js';
-import {applyChromaMapWithDisable} from './core/utils.js';
+import { applyChromaMapWithDisable } from './core/utils.js';
 
 
 import { MenuScene } from './scenes/menu.js';
@@ -18,6 +18,8 @@ import { ArtSceneTwo } from './scenes/story2.js';
 import { ChapterScene } from './scenes/chapter.js';
 import { Level1Scene } from './scenes/level1.js';
 import { GameOverScene } from './scenes/gameover.js';
+import { JsonInputScene } from './scenes/jsonInput.js';
+import { LevelPainterScene } from './scenes/levelPainter.js';
 
 
 import { Player } from './entities/player.js';
@@ -31,7 +33,7 @@ export const mainSketch = (p) => {
     // p.shared.mainFont = p.loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf');
     // p.shared.mainFont = p.loadFont('./assets/found/Patrick_Hand/PatrickHand-Regular.ttf');
     p.shared.mainFont = p.loadFont('./assets/found/Rubik_Bubbles/RubikBubbles-Regular.ttf');
-    
+
     // p.shared.mainFont = p.loadFont('./assets/found/Comic_Neue/ComicNeue-Regular.ttf');
     p.shared.levels = p.loadJSON('./config/levels.json');
     p.shared.chroma = p.loadJSON('./config/chroma.json');
@@ -50,7 +52,7 @@ export const mainSketch = (p) => {
     p.shared.assets.audio['story2'] = p.loadSound('./assets/created/anemone_script2.mp3');
     p.shared.assets.audio['noise_wave'] = p.loadSound('./assets/created/noise_wave.mp3');
     p.shared.assets.audio['ohno'] = p.loadSound('./assets/created/ohno.mp3');
-    
+
     // p.shared.assets.logo = p.loadImage('./assets/created/logo1.png');
   };
 
@@ -99,14 +101,14 @@ export const mainSketch = (p) => {
     p.shared.audio.register('ohno', p.shared.assets.audio['ohno']);
     p.userStartAudio();
     p.shared.audio.warmAll();
-    
+
     // Register scenes
     // this.p.shared.levels.level2;
     p.shared.sceneManager.register('menu', MenuScene);
     p.shared.sceneManager.register('level1', ArtSceneOne);
-    p.shared.sceneManager.register('chapter1', ChapterScene, {levels: [1, 2, 3]});
-    p.shared.sceneManager.register('chapter2', ChapterScene, {levels: [4, 5, 6]});
-    p.shared.sceneManager.register('chapter3', ChapterScene, {levels: [7, 8, 9, 10]});
+    p.shared.sceneManager.register('chapter1', ChapterScene, { levels: [1, 2, 3] });
+    p.shared.sceneManager.register('chapter2', ChapterScene, { levels: [4, 5, 6] });
+    p.shared.sceneManager.register('chapter3', ChapterScene, { levels: [7, 8, 9, 10] });
 
     p.shared.sceneManager.register('level1level', Level1Scene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
     p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2, nextScene: 'level3', chapter: 'chapter1' });
@@ -117,6 +119,11 @@ export const mainSketch = (p) => {
     p.shared.sceneManager.register('level7', Level1Scene, { level: p.shared.levels.level7, nextScene: 'menu', chapter: 'chapter3' });
 
     p.shared.sceneManager.register('endStory', ArtSceneTwo); // this is the last scene, needs audio
+
+    p.shared.sceneManager.register('jsonInput', JsonInputScene);
+    p.shared.sceneManager.register('levelPainter', LevelPainterScene);
+
+
     p.shared.sceneManager.continue = true;
 
     // p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
@@ -124,13 +131,13 @@ export const mainSketch = (p) => {
 
     // final canvas initialization
     initializeCanvasPostSetup(p);
-  };       
+  };
 
   p.draw = () => {
     // if (p.shared.sceneManager.continue) {
-      p.shared.timing.update();
+    p.shared.timing.update();
     // }
-    
+
 
     const { renderer, sceneManager } = p.shared;
     if (!renderer || !sceneManager) return;

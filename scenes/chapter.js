@@ -91,10 +91,6 @@ export class ChapterScene extends BaseScene {
                 this.drawCurrentsUniformTexture();
                 this.drawWorldBoundary(layers.worldLayer);
             }
-
-            for (let t of this.title) {
-                t.draw(layers.entitiesLayer);
-            }
             for (const entity of this.entities) {
                 entity.draw(layers.entitiesLayer, layers.ambientTexture);
             }
