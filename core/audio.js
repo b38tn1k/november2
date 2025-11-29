@@ -123,7 +123,7 @@ export function createAudioManager(p) {
             p.shared.tween(
                 themeFilter,
                 'freq',
-                500,       // target cutoff
+                300,       // target cutoff
                 1000       // duration ms
             );
 
