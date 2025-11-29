@@ -110,7 +110,7 @@ export class BaseScene {
       }
 
       this.levelData.currents = smoothed;
-
+      // this.naturalizeCurrents();
       this.drawCurrentsUniformTexture();
       const spawnWorld = {
         x: this.levelData.spawn.x + 0.5,
@@ -175,14 +175,88 @@ export class BaseScene {
     return [r, player];
   }
 
+  naturalizeCurrents() {
+    // Build a lookup from the *original* field
+    const original = new Map();
+    for (const c of this.levelData.currents) {
+      original.set(`${c.x},${c.y}`, { dx: c.dx, dy: c.dy, def: c.levelDefinitionCurrent });
+    }
+
+    const output = [];
+
+    for (const c of this.levelData.currents) {
+      if (!c.levelDefinitionCurrent) {
+        output.push({ ...c });
+        continue;
+      }
+
+      const base = original.get(`${c.x},${c.y}`);
+      const baseDir = normalize(base.dx, base.dy);
+
+      let sumX = 0;
+      let sumY = 0;
+      let count = 0;
+
+      const dotThreshold = 0.1; // only mix neighbors pointing somewhat similar
+
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          const key = `${c.x + ox},${c.y + oy}`;
+          const n = original.get(key);
+
+          if (!n || !n.def) continue;
+
+          const dirN = normalize(n.dx, n.dy);
+          const dot = baseDir.x * dirN.x + baseDir.y * dirN.y;
+
+          if (dot > dotThreshold) {
+            sumX += dirN.x;
+            sumY += dirN.y;
+            count++;
+          }
+        }
+      }
+
+      let avgDir = { x: baseDir.x, y: baseDir.y };
+      if (count > 0) {
+        avgDir = normalize(sumX / count, sumY / count);
+      }
+
+      // Blend base direction and neighbor direction
+      const blend = 0.2; // 20 percent smoothing
+      let outX = baseDir.x * (1 - blend) + avgDir.x * blend;
+      let outY = baseDir.y * (1 - blend) + avgDir.y * blend;
+
+      const final = normalize(outX, outY);
+
+      output.push({
+        ...c,
+        dx: final.x,
+        dy: final.y
+      });
+    }
+
+    this.levelData.currents = output;
+
+    function normalize(x, y) {
+      const l = Math.sqrt(x * x + y * y);
+      return l > 0.0001 ? { x: x / l, y: y / l } : { x: 0, y: 0 };
+    }
+  }
+
   drawCurrentsUniformTexture() {
     const targetLayer = this.renderer.layers.currentTexture;
     const downscale = 0.5;
     const layer = this.p.createGraphics(Math.round(targetLayer.width * downscale), Math.round(targetLayer.height * downscale));
-    const minDX = this.levelData.currentExtrema.minDX;
-    const maxDX = this.levelData.currentExtrema.maxDX;
-    const minDY = this.levelData.currentExtrema.minDY;
-    const maxDY = this.levelData.currentExtrema.maxDY;
+    // const minDX = this.levelData.currentExtrema.minDX;
+    // const maxDX = this.levelData.currentExtrema.maxDX;
+    // const minDY = this.levelData.currentExtrema.minDY;
+    // const maxDY = this.levelData.currentExtrema.maxDY;
+    const minDX = Math.min(this.levelData.currentExtrema.minDX, this.levelData.currentExtrema.minDY);
+    const maxDX = Math.max(this.levelData.currentExtrema.maxDX, this.levelData.currentExtrema.maxDY);
+    const minDY = Math.min(this.levelData.currentExtrema.minDX, this.levelData.currentExtrema.minDY);
+    const maxDY = Math.max(this.levelData.currentExtrema.maxDX, this.levelData.currentExtrema.maxDY);
+    const maxAmpSq = (maxDX * maxDX) + (maxDY * maxDY);
     // this.Debug.log('level', minDX, maxDX, minDY, maxDY);
     // step thought this.levelData.currents and draw to layer
     for (const c of this.levelData.currents) {
@@ -191,18 +265,34 @@ export class BaseScene {
         const tileSize = this.mapTransform.tileSizePx;
         const r = Math.floor(this.p.map(c.dx, minDX, maxDX, 0, 255));
         const g = Math.floor(this.p.map(c.dy, minDY, maxDY, 0, 255));
-        const b = 0; // neutral
+        const ampSq = (c.dx * c.dx) + (c.dy * c.dy);
+        let ampNorm = ampSq / maxAmpSq;
+        ampNorm = Math.min(1, Math.max(0, ampNorm));  // clamp
+        const b = Math.floor(ampNorm * 255);
         layer.noStroke();
-        layer.fill(r, g, b, 64);
-        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 2.0);
-        layer.fill(r, g, b, 128);
-        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 1.2);
-        layer.fill(r, g, b);
-        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .8 );
+        
+        const baseR = r, baseG = g, baseB = b;
+        const radiusBase = tileSize * downscale;
+
+        for (let i = 1; i <= 6; i++) {
+          const t = i / 6;   // 0..1
+          const rad = radiusBase * (0.5 + t * 2.5); // expand outward
+          const alpha = 255 * (1.0 - t) * 0.13;     // fade out softly
+
+          layer.fill(baseR, baseG, baseB, alpha);
+          layer.circle(screenPos.x * downscale, screenPos.y * downscale, rad);
+        }
+        // layer.fill(r, g, b, 32);
+        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 2.0);
+        // layer.fill(r, g, b, 64);
+        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 1.5);
+        // layer.fill(r, g, b);
+        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .5);
         // layer.square(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 0.9);
 
       }
     }
+    layer.filter(this.p.BLUR, 3);
     targetLayer.imageMode(this.p.CORNER);
     targetLayer.smooth();
     targetLayer.elt.getContext('2d').imageSmoothingEnabled = true;
@@ -300,7 +390,7 @@ export class BaseScene {
         let dir = this.friend.moveLongWays();
         const r = Math.floor(this.p.map(dir.x, -1, 1, 0, 255));
         const g = Math.floor(this.p.map(dir.y, -1, 1, 0, 255));
-        const b = 0; // neutral
+        const b = 128; // neutral
 
         this.renderer.layers.currentTexture.background(r, g, b, 50);
 

@@ -527,38 +527,57 @@ vec4 renderWater(vec2 uv) {
   waterColor = mix(waterColor, fogColor, fogAmount * 0.25);
 
   // === Current Vector Field (A + B Combo, Alpha modulated) ===
+  // === Current Vector Field (A + B Combo, Alpha modulated) ===
   vec4 currSample = texture2D(currentTexture, uv);
-  vec3 curr = currSample.rgb;
   float flowAlpha = currSample.a;
 
-  // Decode flow back to [-1, 1]
-  vec2 flow = curr.rg * 2.0 - 1.0;
-  float flowSpeed = curr.b;
+  // Decode flow back to [-1,1]
+  vec2 flow = currSample.rg * 2.0 - 1.0;
+  float flowSpeed = currSample.b;
 
-  // Flow should vanish where alpha = 0
+  // Apply alpha gate
   flow *= flowAlpha;
   flowSpeed *= flowAlpha;
-  vec2 flowDir = normalize(flow + 1e-5);
 
-  // Cloud-like advected noise (same method as particles, but softer)
-  vec2 cloudUv = uv - flow * uTime * 0.1; // slower advection
-  cloudUv = fract(cloudUv * 4.0);          // bigger tiles = larger shapes
+  // Stable direction
+  float fmag = length(flow);
+  vec2 flowDir = (fmag > 0.0005) ? (flow / fmag) : vec2(0.0);
 
-  float cloudBase = noise(cloudUv * 12.0); // soft, medium frequency
+  // ------------------------------------------------------------
+  // CLOUD FIELD — now anisotropic & directionally clear
+  // ------------------------------------------------------------
 
-  // Smoothly shape the cloud brightness
-  float cloudMask = smoothstep(0.55, 0.95, cloudBase);
+  // Advection
+  vec2 cloudUv = uv - flow * uTime * 0.10;
 
-  // Tie brightness to flow speed and alpha
-  float cloudIntensity = (0.3 + flowSpeed * 1.2) * flowAlpha;
+  // Stretch along flow direction, compress across it
+  mat2 flowStretch =
+      mat2(flowDir * 1.4,                       // 1.4x along flow
+           vec2(-flowDir.y, flowDir.x) * 0.55); // compressed cross-flow
+  cloudUv = fract((cloudUv * flowStretch) * 4.0);
 
-  waterColor += vec3(0.10, 0.26, 0.30) * cloudMask * cloudIntensity * 0.15;
+  float cloudBase = noise(cloudUv * 12.0);
 
-  // Current Bubbles
-    vec2 particleUv = uv - flow * uTime * 0.1;
-    particleUv = fract(particleUv * 18.0);
-    float particleMask = smoothstep(0.82, 0.96, noise(particleUv * 25.0));
-    waterColor += vec3(0.12, 0.30, 0.38) * particleMask * 0.75 * flowAlpha;
+  // Softer shaping for wider, foggier currents
+  float cloudMask = smoothstep(0.50, 0.85, cloudBase);
+
+  // Tie intensity to real current amplitude
+  float cloudIntensity = (0.25 + flowSpeed * 1.4) * flowAlpha;
+
+  waterColor += vec3(0.09, 0.24, 0.28) * cloudMask * cloudIntensity * 0.07;
+
+  // ------------------------------------------------------------
+  // PARTICLE FIELD — unchanged except minor softening
+  // ------------------------------------------------------------
+  vec2 particleUv = uv - flow * uTime * 0.1;
+  particleUv = fract(particleUv * 14.0);
+
+  float freq = mix(35.0, 24.0, flowSpeed);
+  float base = noise(particleUv * freq);
+
+  float particleMask = smoothstep(0.80, 0.96, base);
+
+  waterColor += vec3(0.12, 0.30, 0.38) * particleMask * 0.55 * flowAlpha;
 
   return vec4(waterColor, 1.0);
 }
