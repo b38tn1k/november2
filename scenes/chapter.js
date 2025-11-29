@@ -1,5 +1,4 @@
 import { BaseScene } from '../core/BaseScene.js';
-import { WobbleText } from '../components/WobbleText.js';
 import { MyButton } from '../components/myButton.js';
 import { Plankton } from '../entities/plankton.js';
 

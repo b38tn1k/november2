@@ -16,6 +16,7 @@ import { MenuScene } from './scenes/menu.js';
 import { ArtSceneOne } from './scenes/story1.js';
 import { ArtSceneTwo } from './scenes/story2.js';
 import { ChapterScene } from './scenes/chapter.js';
+import { TutorialScene } from './scenes/tutorial.js';
 import { Level1Scene } from './scenes/level1.js';
 import { GameOverScene } from './scenes/gameover.js';
 import { JsonInputScene } from './scenes/jsonInput.js';
@@ -162,7 +163,8 @@ export const mainSketch = (p) => {
     p.shared.sceneManager.register('chapter2', ChapterScene, { levels: [4, 5, 6] });
     p.shared.sceneManager.register('chapter3', ChapterScene, { levels: [7, 8, 9, 10] });
 
-    p.shared.sceneManager.register('level1level', Level1Scene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
+    // p.shared.sceneManager.register('level1', TutorialScene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
+    p.shared.sceneManager.register('level1level', TutorialScene, { level: p.shared.levels.level1, nextScene: 'level2', chapter: 'chapter1' });
     p.shared.sceneManager.register('level2', Level1Scene, { level: p.shared.levels.level2, nextScene: 'level3', chapter: 'chapter1' });
     p.shared.sceneManager.register('level3', Level1Scene, { level: p.shared.levels.level3, nextScene: 'level4', chapter: 'chapter1' });
     p.shared.sceneManager.register('level4', Level1Scene, { level: p.shared.levels.level4, nextScene: 'level5', chapter: 'chapter2' });

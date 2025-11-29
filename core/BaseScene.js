@@ -41,6 +41,7 @@ export class BaseScene {
   }
 
   init() {
+    this.p.shared.audio.disableThemeFilter();
     this.gameState = PLAYING;
     this.Debug.log('level', `📜 ${this.constructor.name} initialized`);
     this.sceneFrameCount = 0;
@@ -176,7 +177,7 @@ export class BaseScene {
 
   drawCurrentsUniformTexture() {
     const targetLayer = this.renderer.layers.currentTexture;
-    const downscale = 0.02;
+    const downscale = 0.5;
     const layer = this.p.createGraphics(Math.round(targetLayer.width * downscale), Math.round(targetLayer.height * downscale));
     const minDX = this.levelData.currentExtrema.minDX;
     const maxDX = this.levelData.currentExtrema.maxDX;
@@ -190,15 +191,23 @@ export class BaseScene {
         const tileSize = this.mapTransform.tileSizePx;
         const r = Math.floor(this.p.map(c.dx, minDX, maxDX, 0, 255));
         const g = Math.floor(this.p.map(c.dy, minDY, maxDY, 0, 255));
-        const b = 128; // neutral
+        const b = 0; // neutral
         layer.noStroke();
+        layer.fill(r, g, b, 64);
+        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 2.0);
+        layer.fill(r, g, b, 128);
+        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 1.2);
         layer.fill(r, g, b);
-        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .8);
+        layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .8 );
+        // layer.square(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 0.9);
+
       }
     }
     targetLayer.imageMode(this.p.CORNER);
     targetLayer.smooth();
     targetLayer.elt.getContext('2d').imageSmoothingEnabled = true;
+    // targetLayer.noSmooth();
+    // targetLayer.elt.getContext('2d').imageSmoothingEnabled = false;
     targetLayer.image(layer, 0, 0, targetLayer.width, targetLayer.height);
     layer.remove();
   }
@@ -291,7 +300,7 @@ export class BaseScene {
         let dir = this.friend.moveLongWays();
         const r = Math.floor(this.p.map(dir.x, -1, 1, 0, 255));
         const g = Math.floor(this.p.map(dir.y, -1, 1, 0, 255));
-        const b = 128; // neutral
+        const b = 0; // neutral
 
         this.renderer.layers.currentTexture.background(r, g, b, 50);
 
