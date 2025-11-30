@@ -5,6 +5,8 @@ precision mediump float;
 uniform sampler2D tex0;
 uniform sampler2D ambientTexture;
 uniform sampler2D currentTexture;
+uniform sampler2D fbmTexture;
+uniform sampler2D staticFbmTexture;
 uniform vec2 uResolution;
 uniform float uTime;
 
@@ -55,6 +57,44 @@ float fbm(vec2 p) {
   return value;
 }
 
+float texFBM(vec2 uv) {
+  vec3 lookup = texture2D(fbmTexture, fract(uv)).rgb;
+
+  // Weighted combination of the three octaves
+  return lookup.r * 0.5 + lookup.g * 0.35 + lookup.b * 0.15;
+}
+
+float texStaticFBM(vec2 uv) {
+  // Increase sample frequency dramatically
+  uv *= 220.0;
+
+  // Introduce jitter to break bilinear smoothing
+  vec2 jitter =
+      vec2(noise(uv * 0.61 + uTime * 0.01), noise(uv * 1.37 - uTime * 0.013)) *
+      0.35;
+
+  vec3 v = texture2D(staticFbmTexture, fract(uv + jitter)).rgb;
+
+  // Heavier bias toward high‑frequency blue channel
+  return dot(v, vec3(0.12, 0.28, 0.60));
+}
+
+float roughTexStaticFBM(vec2 uv) {
+  // Massive frequency; this is the key
+  uv *= 470.2;
+
+  // Break interpolation coherence (critical)
+  vec2 jitter =
+      vec2(noise(uv * 0.7 + uTime * 0.02), noise(uv * 1.3 - uTime * 0.015)) *
+      0.5;
+
+  // Sample far off grid
+  vec3 v = texture2D(staticFbmTexture, fract(uv + jitter)).rgb;
+
+  // Strong bias toward highest-frequency band (blue)
+  return dot(v, vec3(0.1, 0.25, 0.65));
+}
+
 // --------------------------------------------------------
 // Worley-style caustics helpers for water
 // --------------------------------------------------------
@@ -75,16 +115,6 @@ float worleyWater(vec2 p) {
   return 3.0 * exp(-4.0 * abs(2.5 * d - 1.0));
 }
 
-// float fworleyWater(vec2 p) {
-//   // Layered Worley patterns, animated over time
-//   float w1 = worleyWater(p * 5.0 + vec2(0.05 * uTime, 0.0));
-//   float w2 = worleyWater(p * 50.0 + vec2(0.12, -0.10 * uTime));
-//   float w3 = worleyWater(p * -10.0 + vec2(0.0, 0.03 * uTime));
-
-//   float t = w1 * sqrt(w2) * sqrt(sqrt(w3));
-//   return sqrt(sqrt(sqrt(max(t, 0.0))));
-// }
-
 // Hybrid Worley + FBM caustics (Level 3 optimization)
 float fworleyWater(vec2 p) {
   float t = uTime * 2.0;
@@ -92,46 +122,6 @@ float fworleyWater(vec2 p) {
   float d = fbm(p * 10.0 + vec2(t * 1.3, t * 0.7));
   return mix(w, d, 0.25);
 }
-
-// --------------------------------------------------------
-// Wave interference helpers (screen-space wave bands)
-// --------------------------------------------------------
-// float wavedx(vec2 position, vec2 direction, float time, float freq) {
-//   float x = dot(direction, position) * freq + time;
-//   return exp(sin(x) - 1.0);
-// }
-
-// float getWaves2D(vec2 position, float time) {
-//   float iter = 0.0;
-//   float phase = 6.0;
-//   float speed = 0.7; // slower than reference
-//   float weight = 1.0;
-//   float w = 0.0;
-//   float ws = 0.0;
-
-//   for (int i = 0; i < 3; i++) {
-//     vec2 dir = vec2(sin(iter), cos(iter));
-//     float res = wavedx(position, dir, speed * time, phase);
-//     w += res * weight;
-//     ws += weight;
-//     iter += 12.0;
-//     weight *= 0.75;
-//     phase *= 1.18;
-//     speed *= 1.05;
-//   }
-//   return w / ws;
-// }
-
-// // Octave-like sum of two wave fields (inspired by sea_octave)
-// // float sea_octaveWater(vec2 uv, float choppy, float time) {
-// //   float wA = getWaves2D(uv * choppy, time);
-// //   float wB = getWaves2D(uv, time);
-// //   return wA + wB;
-// // }
-
-// float sea_octaveWater(vec2 uv, float choppy, float time) {
-//   return getWaves2D(uv * choppy, time);
-// }
 
 float wavedx(vec2 position, vec2 direction, float time, float freq) {
   float x = dot(direction, position) * freq + time;
@@ -172,88 +162,13 @@ float sea_octaveWater(vec2 uv, float choppy, float time) {
   return getWaves2D(uv * choppy, time);
 }
 
-// --------------------------------------------------------
-// Nebula-style soft field (inspired by volumetric fractal)
-// --------------------------------------------------------
-// float nebulaLayer(vec2 uv, float time) {
-//   // Lift 2D UV into a pseudo-3D orbit space
-//   vec3 p = vec3((uv - 0.5) * 3.0, 0.7);
-//   p.z += time * 0.3;
-
-//   float accum = 0.0;
-//   float glow = 0.0;
-//   vec3 pp = p;
-
-//   // Low iteration count compared to reference to keep it cheap
-//   for (int i = 0; i < 8; i++) {
-//     pp = abs(pp) / dot(pp, pp) - 0.7;
-//     float lenP = length(pp);
-//     accum += lenP;
-//     glow += exp(-abs(lenP - 0.25) * 4.0);
-//   }
-
-//   // Normalize and clamp to a soft 0..1 band
-//   float a = accum / 8.0;
-//   float g = glow * 0.25;
-
-//   // Combine into a smooth "foggy" field, less dotty than Worley alone
-//   float field = g / (1.0 + a * a);
-//   return clamp(field, 0.0, 1.0);
-// }
-
-// --------------------------------------------------------
-// Lightweight volumetric band (inspired by fractal tunnel)
-// --------------------------------------------------------
-// float volumetricBand(vec2 uv, float time) {
-//   // Screen-space to "ray" space
-//   vec2 cuv = uv - 0.5;
-//   cuv.y *= uResolution.y / uResolution.x;
-//   vec3 dir = normalize(vec3(cuv * 0.5, 1.0));
-
-//   // Scrolling origin similar to the reference
-//   vec3 from = vec3(1.0, 0.5, 0.5);
-//   from += vec3(time * 1.0, time * 0.5, -1.5);
-//   float tile = 0.85;
-//   from = mod(from, tile) - tile * 0.5;
-
-//   float s = 0.1;
-//   float fade = 1.0;
-//   float accum = 0.0;
-
-//   const int VOL_STEPS = 10;
-//   const int ORBIT_ITERS = 6;
-//   for (int r = 0; r < VOL_STEPS; r++) {
-//     vec3 p = from + s * dir * 0.5;
-
-//     float a = 0.0;
-//     float pa = 0.0;
-//     for (int i = 0; i < ORBIT_ITERS; i++) {
-//       p = abs(p) / dot(p, p) - 0.7;
-//       a += abs(p.x + p.y + p.z);
-//       pa += exp(-abs(length(p) - 0.2) * 3.0);
-//     }
-
-//     a *= a * a;
-//     accum += a * fade;
-
-//     fade *= 0.73;
-//     s += 0.12;
-//   }
-
-//   accum /= float(VOL_STEPS);
-
-//   // Very gentle scaling to avoid overpowering the base
-//   float field = accum * 0.0025;
-//   return clamp(field, 0.0, 1.0);
-// }
-
 float cheapFogLayer(vec2 uv, float time) {
   //   shift/scale UV space so the pattern moves slowly
   vec2 p = uv * vec2(2.0, 1.4);
   p += vec2(time * 0.03, -time * 0.02);
 
-  float f = 0.55 * fbm(p * 5.0) + 0.30 * fbm(p * 10.0 + 5.17) +
-            0.15 * fbm(p * 20.0 - 2.73);
+  float f = 0.55 * fbm(p * 5.0) + 0.30 * texFBM(p * 10.0 + 5.17) +
+            0.15 * texFBM(p * 20.0 - 2.73);
 
   f = smoothstep(0.45, 0.95, f); // narrower contrast window
 
@@ -419,9 +334,87 @@ vec3 blur9(sampler2D tex, vec2 uv, float px) {
 // Ambient shader atlas textured organisms
 // --------------------------------------------------------
 vec4 renderAmbientLayer(vec2 uv) {
-  // Mask provides only color family, not structure
   vec3 maskColor = texture2D(ambientTexture, uv).rgb;
-  return vec4(maskColor, 1.0);
+
+  vec3 hsv = rgb2hsv(maskColor);
+
+  // very subtle hue oscillation
+  hsv.x += sin(10.0 * uTime + uv.x * 5.5 + uv.y * 3.1) * 0.02;
+
+  // small breathing in value
+  hsv.z *= 0.92 + 0.08 * sin(uTime * 0.25 + uv.y * 5.2);
+
+  // tiny caustic tint integration
+  float ca = texFBM(uv * 6.0 + uTime * 0.05);
+  ca = smoothstep(0.55, 0.95, ca);
+  vec3 caTint = vec3(0.20, 0.45, 0.65) * (ca * 0.12);
+
+  vec3 finalCol = hsv2rgb(hsv) + caTint;
+
+  return vec4(finalCol, 1.0);
+}
+
+// --- Voronoi helper ---
+float vor(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float md = 10.0;
+
+  for (int xo = -1; xo <= 1; xo++) {
+    for (int yo = -1; yo <= 1; yo++) {
+      vec2 g = vec2(float(xo), float(yo));
+      vec2 o = vec2(noise(i + g), noise(i + g + 5.2));
+      float d = length(f - g - o);
+      md = min(md, d);
+    }
+  }
+  return md;
+}
+
+vec4 renderEnemyLayer(vec2 uv) {
+
+  // Center distance for pulse and ring placement
+  vec2 center = vec2(0.5);
+  float d = distance(uv, center);
+
+  // ------------------------------------------------------------
+  // 1. Base yellow‑tan body tone
+  // ------------------------------------------------------------
+  float n = noise(uv * 40.0 + uTime * 0.2);
+  vec3 baseBody = mix(vec3(0.90, 0.78, 0.44), vec3(0.70, 0.55, 0.28), n);
+
+  // ------------------------------------------------------------
+  // 2. Voronoi "chromatophore blobs"
+  // ------------------------------------------------------------
+  float v = vor(uv * 34.0 + uTime * 0.15);
+  float blobMask = smoothstep(0.12, 0.32, v);
+
+  vec3 blobColor =
+      mix(vec3(0.05, 0.25, 0.98), vec3(0.35, 0.28, 0.18), blobMask * 0.8);
+
+  // ------------------------------------------------------------
+  // 3. High-frequency neon‑cyan rings around Voronoi edges
+  // ------------------------------------------------------------
+  float edge = smoothstep(0.1, 0.01, v);
+  float pulse = 0.75 + 0.25 * sin(uTime * 2.2 + d * 6.0);
+
+  vec3 neonCyan = vec3(0.05, 1.35, 1.75); // brighter, more electric
+  vec3 ringGlow = neonCyan * edge * pulse * 0.3;
+
+  // ------------------------------------------------------------
+  // 4. Additional micro speckles
+  // ------------------------------------------------------------
+  float speck = noise(uv * 380.0 + uTime * 0.6);
+  speck = smoothstep(0.90, 0.98, speck);
+  vec3 speckCol = vec3(0.8, 1.0, 1.0) * speck * 0.35;
+
+  // ------------------------------------------------------------
+  // Composite
+  // ------------------------------------------------------------
+  vec3 finalCol = baseBody + blobColor * 0.8 + ringGlow + speckCol;
+  finalCol *= finalCol;
+
+  return vec4(finalCol, 1.0);
 }
 
 // --------------------------------------------------------
@@ -438,8 +431,9 @@ vec4 renderWater(vec2 uv) {
   float worleyRaw = fworleyWater(worleyUv);
 
   // Soft fbm base to look more like uniform water, with Worley as subtle accent
-  float base1 = fbm(uv * vec2(6.0, 3.0) + vec2(uTime * 0.08, -uTime * 0.04));
-  float base2 = fbm(uv * vec2(14.0, 7.0) + vec2(-uTime * 0.05, uTime * 0.02));
+  float base1 = texFBM(uv * vec2(6.0, 3.0) + vec2(uTime * 0.08, -uTime * 0.04));
+  float base2 =
+      texFBM(uv * vec2(14.0, 7.0) + vec2(-uTime * 0.05, uTime * 0.02));
   float t = mix(base1, base2, 0.5);
 
   // Wave bands layered on top (sea_octave-inspired, but softened)
@@ -513,7 +507,7 @@ vec4 renderWater(vec2 uv) {
     // float s = fworleyWater(rayUv * (uResolution / 2000.0));
     // float s = cheapFogLayer(rayUv, uTime * 0.2);
     // ALTERNATE:
-    float s = fbm(rayUv * 2.0 + uTime * 0.1);
+    float s = texFBM(rayUv * 2.0 + uTime * 0.1);
     shaftAccum += s * illuminationDecay;
     illuminationDecay *= decay;
   }
@@ -564,7 +558,7 @@ vec4 renderWater(vec2 uv) {
   // Tie intensity to real current amplitude
   float cloudIntensity = (0.25 + flowSpeed * 1.4) * flowAlpha;
 
-  waterColor += vec3(0.09, 0.24, 0.28) * cloudMask * cloudIntensity * 0.07;
+  waterColor += vec3(0.09, 0.24, 0.28) * cloudMask * cloudIntensity * 0.05;
 
   // ------------------------------------------------------------
   // PARTICLE FIELD — unchanged except minor softening
@@ -623,7 +617,7 @@ float rockHeight(vec2 p) {
 
   // Low-frequency mask to vary roughness across the cave: some zones smoother,
   // some more craggy. This helps avoid homogeneity.
-  float macro = fbm(p * 0.5 + vec2(10.7, -3.9)); // ~0..1
+  float macro = texStaticFBM(p * 0.5 + vec2(10.7, -3.9)); // ~0..1
 
   // Blend: fbm shapes + softened tunnel waves + pebbles, modulated by macro
   float height = base * (0.65 + 0.25 * macro) +
@@ -672,12 +666,20 @@ vec4 renderTerrain(vec2 uv) {
   float height = rockHeightFast(p);
   vec3 normal = rockNormalFast(p);
 
+  // --- Ultra-fine sandpaper normal detail ---
+  vec2 micro = vec2(texStaticFBM(p * 60.0 + 4.0) - 0.5,
+                    texStaticFBM(p * 80.0 - 7.0) - 0.5);
+
+  // Scale micro normals based on AO (smooth in cavities, crisp on edges)
+  float microMask = smoothstep(0.15, 0.85, height);
+  normal = normalize(normal + vec3(micro * 0.20 * microMask, 0.0));
+
   // Tunnel-style surface field (same as used in height)
   float surf = tunnelSurf(p);
 
   // Macro variation for regional heterogeneity: some bands darker and smoother,
   // others slightly rougher and cooler-toned.
-  float macroVar = fbm(p * 0.7 + vec2(-6.3, 4.1)); // ~0..1
+  float macroVar = texStaticFBM(p * 0.7 + vec2(-6.3, 4.1)); // ~0..1
 
   // Light direction
   vec3 lightDir = normalize(vec3(-0.4, 0.6, 0.7));
@@ -694,25 +696,39 @@ vec4 renderTerrain(vec2 uv) {
 
   // Base color from height and lighting, with gentle contrast
   vec3 rockColor = mix(darkRock, midRock, height);
+
+  // Very subtle surface grit, just to keep from being too flat
+  float grit = noise(p * 5.0) + noise(p * 50.0) + noise(p * 500.0);
+  rockColor += (grit - 0.5) * 0.1;
+
+  // Large-scale shelves / crags (broad, crisp terrain patterns)
+  float macroCrag = texStaticFBM(p * 5.2 + vec2(7.3, -13.1));
+  macroCrag = smoothstep(2.32, 10.88, macroCrag);
+
+  // brighten shelves, darken alcoves
+  rockColor = mix(rockColor * 0.75, rockColor * 1.25, macroCrag * 1.55);
   float upFacing =
       clamp(normal.y * 0.8 + 0.2, 0.0, 1.0); // surfaces facing "up"
   rockColor = mix(rockColor, lightRock, diffuse * 0.4 + upFacing * 0.25);
 
   // Regional variation: lighter shelves vs darker recesses
-  rockColor *= mix(0.82, 1.08, macroVar);
+  //   rockColor *= mix(0.82, 1.08, macroVar);
+  rockColor *= mix(1.0, 2.08, macroVar);
 
   // Slight cool water influence toward deeper areas
   float depthFactor = clamp(uv.y * 1.2, 0.0, 1.0);
   vec3 coolDeep = vec3(0.12, 0.20, 0.26);
   rockColor =
-      mix(rockColor, mix(rockColor, coolDeep, 0.55), depthFactor * 0.45);
+      mix(rockColor, mix(rockColor, coolDeep, 0.55), depthFactor * 0.75);
 
-  // Very subtle surface grit, just to keep from being too flat
-  float grit = noise(p * 30.0);
-  rockColor += (grit - 0.5) * 0.06;
+  float hf = texStaticFBM(p * 55.0);
+  float hfMask = smoothstep(0.1, 0.9, height); // avoid shadow pits
+
+  // pseudo self-shadowing (simulates tiny cavities catching less light)
+  rockColor *= 1.0 - (hf - 0.5) * 0.70 * hfMask;
 
   // Moisture / dark streaks (kept very soft)
-  float wet = fbm(p * vec2(1.0, 6.0) + vec2(0.0, -uTime * 0.06));
+  float wet = texStaticFBM(p * vec2(1.0, 6.0) + vec2(0.0, -uTime * 0.06));
   wet = smoothstep(0.68, 0.96, wet);
   rockColor = mix(rockColor, rockColor * vec3(0.65, 0.72, 0.78), wet * 0.25);
 
@@ -723,37 +739,35 @@ vec4 renderTerrain(vec2 uv) {
   rockColor = mix(rockColor, strataColor, 0.35 * (0.3 + ao * 0.7));
 
   // Ambient occlusion to ground everything in shadowy caves
-  rockColor *= (0.62 + ao * 0.35);
+  rockColor *= (0.62 + ao * 0.55);
 
   // Keep rocks slightly darker than the water overall
-  rockColor *= 0.92;
+  rockColor *= 0.62;
 
   // === Soft watery reflection / caustic tint (cheap, stable) ===
 
-  //   // Recreate a lightweight water caustic field in terrain UV space
-  //   float w1 = fbm(p * vec2(6.0, 3.0) + vec2(uTime * 0.08, -uTime * 0.04));
-  //   float w2 = fbm(p * vec2(14.0, 7.0) + vec2(-uTime * 0.05, uTime * 0.02));
-  //   float w = mix(w1, w2, 0.5);
+  // Recreate a lightweight water caustic field in terrain UV space
+  float w1 = fbm(p * vec2(6.0, 3.0) + vec2(uTime * 0.08, -uTime * 0.04));
+  float w2 = fbm(p * vec2(14.0, 7.0) + vec2(-uTime * 0.05, uTime * 0.02));
+  float w = mix(w1, w2, 0.5);
 
-  //   // Subtle Worley accent (high-frequency only)
-  //   float a = fworleyWater(p * 6.0) * 0.04;
+  // Subtle Worley accent (high-frequency only)
+  float a = fworleyWater(p * 6.0) * 0.04;
 
-  //   // Wave modulation to mimic water’s moving light bands
-  //   float wave =
-  //       sea_octaveWater((p - vec2(0.5, 0.7)) * vec2(6.0, 3.5), 0.5, uTime *
-  //       0.6);
-  //   float waveMod = clamp(wave * 0.35, 0.0, 2.0);
+  // Wave modulation to mimic water’s moving light bands
+  float wave =
+      sea_octaveWater((p - vec2(0.5, 0.7)) * vec2(6.0, 3.5), 0.5, uTime * 0.6);
+  float waveMod = clamp(wave * 0.35, 0.0, 2.0);
 
-  //   // Combine into a soft caustic-like reflectivity field
-  //   float terrainCaustic = w * (0.75 + 0.25 * waveMod) + a;
-  //   terrainCaustic = smoothstep(0.45, 0.98, terrainCaustic);
+  // Combine into a soft caustic-like reflectivity field
+  float terrainCaustic = w * (0.75 + 0.25 * waveMod) + a;
+  terrainCaustic = smoothstep(0.45, 0.98, terrainCaustic);
 
-  //   // Tint slightly toward the water palette (no bright rings)
-  //   vec3 terrainReflectionTint = vec3(0.25, 0.35, 0.50);
+  // Tint slightly toward the water palette (no bright rings)
+  vec3 terrainReflectionTint = vec3(0.25, 0.35, 0.50);
 
-  //   // Apply only on up-facing or AO-light areas
-  //   rockColor += terrainCaustic * terrainReflectionTint * (1.0 - ao*4.0) *
-  //   0.15;
+  // Apply only on up-facing or AO-light areas
+  rockColor += terrainCaustic * terrainReflectionTint * (1.0 - ao * 4.0) * 0.15;
 
   return vec4(rockColor, 1.0);
 }
@@ -786,39 +800,24 @@ void main() {
   classifyMask(snapped, isTerrain, isBackground, isCurrent, isPlayer, isEnemy,
                isAmbient, isVegetation, isStaticVegetation);
 
-  bool isSnapped = true;
-
-  // Player fill
+  // Early return structure for mask classes
   if (isPlayer) {
-    isSnapped = false;
     gl_FragColor = renderPlayerStarfish(uv);
-    // return;
-  }
-
-  // Ambient plankton
-  if (isAmbient) {
-    isSnapped = false;
+    return;
+  } else if (isAmbient) {
     gl_FragColor = renderAmbientLayer(uv);
-    // return;
-  }
-
-  // Background water and currents
-  if (isBackground) {
-    isSnapped = false;
+    return;
+  } else if (isBackground) {
     gl_FragColor = renderWater(uv);
-    // return;
-  }
-
-  // Terrain
-  if (isTerrain) {
-    isSnapped = false;
+    return;
+  } else if (isTerrain) {
     gl_FragColor = renderTerrain(uv);
-    // return;
-  }
-
-  // Fallback: pass through snapped color
-  if (isSnapped) {
+    return;
+  } else if (isEnemy) {
+    gl_FragColor = renderEnemyLayer(uv);
+    return;
+  } else {
     gl_FragColor = snapped;
+    return;
   }
-  return;
 }

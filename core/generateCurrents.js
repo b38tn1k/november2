@@ -345,3 +345,16 @@ export function generateCurrents(result, p) {
     // console.log('Current extrema:', extrema);
     return result;
 }
+
+// "idddddddddddddddddddj",
+// "bibbbbbbbbbbbbdddddja",
+// "bccclllllbbbbiiidddda",
+// "bcccllll.....iiidddda",
+// "bcccccl.......iddddda",
+// "bccccc.........ddddda",
+// "bccccc.........ddddda",
+// "bcccckk.......jjdddda",
+// "bccccckk.....jjjdddda",
+// "bcccccakkaaaajjddddda",
+// "blcccccccaaaaaaaaaaka",
+// "lcaaaaaaaaaaaaaaaaaak"

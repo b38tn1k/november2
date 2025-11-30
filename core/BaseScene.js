@@ -246,8 +246,8 @@ export class BaseScene {
 
   drawCurrentsUniformTexture() {
     const targetLayer = this.renderer.layers.currentTexture;
-    const downscale = 0.5;
-    const layer = this.p.createGraphics(Math.round(targetLayer.width * downscale), Math.round(targetLayer.height * downscale));
+    const downscale = 1.0;
+    // const layer = this.p.createGraphics(Math.round(targetLayer.width * downscale), Math.round(targetLayer.height * downscale));
     // const minDX = this.levelData.currentExtrema.minDX;
     // const maxDX = this.levelData.currentExtrema.maxDX;
     // const minDY = this.levelData.currentExtrema.minDY;
@@ -269,7 +269,7 @@ export class BaseScene {
         let ampNorm = ampSq / maxAmpSq;
         ampNorm = Math.min(1, Math.max(0, ampNorm));  // clamp
         const b = Math.floor(ampNorm * 255);
-        layer.noStroke();
+        targetLayer.noStroke();
         
         const baseR = r, baseG = g, baseB = b;
         const radiusBase = tileSize * downscale;
@@ -279,27 +279,26 @@ export class BaseScene {
           const rad = radiusBase * (0.5 + t * 2.5); // expand outward
           const alpha = 255 * (1.0 - t) * 0.13;     // fade out softly
 
-          layer.fill(baseR, baseG, baseB, alpha);
-          layer.circle(screenPos.x * downscale, screenPos.y * downscale, rad);
+          targetLayer.fill(baseR, baseG, baseB, alpha);
+          targetLayer.circle(screenPos.x * downscale, screenPos.y * downscale, rad);
         }
-        // layer.fill(r, g, b, 32);
-        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 2.0);
-        // layer.fill(r, g, b, 64);
-        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 1.5);
-        // layer.fill(r, g, b);
-        // layer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .5);
-        // layer.square(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 0.9);
-
+        // targetLayer.fill(r, g, b, 32);
+        // targetLayer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 2.0);
+        // targetLayer.fill(r, g, b, 64);
+        // targetLayer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 1.5);
+        // targetLayer.fill(r, g, b);
+        // targetLayer.circle(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * .5);
+        // targetLayer.square(screenPos.x * downscale, screenPos.y * downscale, tileSize * downscale * 0.9);
       }
     }
-    layer.filter(this.p.BLUR, 3);
-    targetLayer.imageMode(this.p.CORNER);
-    targetLayer.smooth();
-    targetLayer.elt.getContext('2d').imageSmoothingEnabled = true;
-    // targetLayer.noSmooth();
-    // targetLayer.elt.getContext('2d').imageSmoothingEnabled = false;
-    targetLayer.image(layer, 0, 0, targetLayer.width, targetLayer.height);
-    layer.remove();
+    targetLayer.filter(this.p.BLUR, 3);
+    // targetLayer.imageMode(this.p.CORNER);
+    // targetLayer.smooth();
+    // targetLayer.elt.getContext('2d').imageSmoothingEnabled = true;
+    // // targetLayer.noSmooth();
+    // // targetLayer.elt.getContext('2d').imageSmoothingEnabled = false;
+    // targetLayer.image(layer, 0, 0, targetLayer.width, targetLayer.height);
+    // layer.remove();
   }
 
   addInGameMenuButtons() {

@@ -10,6 +10,5 @@ export class TutorialScene extends Level1Scene {
 
     init() {
         super.init();
-        console.log("Tutorial scene initialized");
     }
 }

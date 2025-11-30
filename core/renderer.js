@@ -89,6 +89,22 @@ export async function createRenderer(p) {
         this.layers[layerName].elt.getContext('2d').imageSmoothingEnabled = false;
       });
 
+      this.layers.fbmTexture = p.createGraphics(128, 128);
+      this.layers.fbmTexture.pixelDensity(1);
+      this.layers.fbmTexture.noSmooth();
+      this.layers.fbmTexture.elt.getContext("2d").imageSmoothingEnabled = false;
+      this.layers.fbmTexture.background(255, 0, 100);
+      this.initializeFBMTexture(this.layers.fbmTexture);
+      this.drawFBMTexture(this.layers.fbmTexture);
+      this.layers.staticFbmTexture = p.createGraphics(128, 128);
+      this.layers.staticFbmTexture.pixelDensity(1);
+      this.layers.staticFbmTexture.noSmooth();
+      this.layers.staticFbmTexture.elt.getContext("2d").imageSmoothingEnabled = false;
+      this.initializeFBMTexture(this.layers.staticFbmTexture);
+      this.drawFBMTexture(this.layers.staticFbmTexture);
+      // this.layers.fbmTexture.save('static_fbm.png');
+      // this.layers.staticFbmTexture.save('static_fbm.png');
+
       // await this.loadShader('default', './shaders/testing_and_old/monet.vert', './shaders/testing_and_old/monet.frag');
       // await this.loadShader('default', './shaders/testing_and_old/nes.vert', './shaders/testing_and_old/nes.frag');
       await this.loadShader('default', './shaders/post.vert', './shaders/default.frag');
@@ -107,11 +123,109 @@ export async function createRenderer(p) {
       ];
     },
 
+    initializeFBMTexture(g) {
+      const w = g.width;
+      const h = g.height;
+
+      g.loadPixels();
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const uvx = x / w;
+          const uvy = y / h;
+
+          const f1 = p.noise(uvx * 4.0, uvy * 4.0);
+          const f2 = p.noise(uvx * 8.0, uvy * 8.0);
+          const f3 = p.noise(uvx * 16.0, uvy * 16.0);
+
+          const idx = (y * w + x) * 4;
+          g.pixels[idx + 0] = Math.floor(f1 * 255);
+          g.pixels[idx + 1] = Math.floor(f2 * 255);
+          g.pixels[idx + 2] = Math.floor(f3 * 255);
+          g.pixels[idx + 3] = 255;
+        }
+      }
+
+      g.updatePixels();
+    },
+
+    drawFBMTexture(g) {
+
+      g.loadPixels();
+
+      const w = g.width;
+      const h = g.height;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const uvx = x / w;
+          const uvy = y / h;
+
+          // --- FBM at several scales ---
+          const f1 = p.noise(uvx * 4.0, uvy * 4.0);
+          const f2 = p.noise(uvx * 8.0, uvy * 8.0);
+          const f3 = p.noise(uvx * 16.0, uvy * 16.0);
+
+          // Pack into RGB
+          const idx = (y * w + x) * 4;
+          g.pixels[idx + 0] = Math.floor(f1 * 255); // low freq
+          g.pixels[idx + 1] = Math.floor(f2 * 255); // medium
+          g.pixels[idx + 2] = Math.floor(f3 * 255); // high
+          g.pixels[idx + 3] = 255;
+        }
+      }
+
+      g.updatePixels();
+    },
+
+    updateFBMTexture() {
+      const g = this.layers.fbmTexture;
+      const w = g.width;
+      const h = g.height;
+
+      g.loadPixels();
+
+      const pixelCount = 100; // adjust to taste
+      for (let i = 0; i < pixelCount; i++) {
+
+        // Pick a random pixel
+        const x = Math.floor(Math.random() * w);
+        const y = Math.floor(Math.random() * h);
+
+        const uvx = x / w;
+        const uvy = y / h;
+
+        // Compute small modifications: slightly shifting noise parameters
+        // Add a small temporal offset to keep the feel "alive"
+        const t = performance.now() * 0.0001;
+
+        const f1 = p.noise(uvx * 4.0 + t,
+          uvy * 4.0 - t);
+
+        const f2 = p.noise(uvx * 8.0 - t * 1.4,
+          uvy * 8.0 + t * 1.2);
+
+        const f3 = p.noise(uvx * 16.0 + t * 2.0,
+          uvy * 16.0 - t * 1.8);
+
+        const idx = (y * w + x) * 4;
+        g.pixels[idx + 0] = Math.floor(f1 * 255);
+        g.pixels[idx + 1] = Math.floor(f2 * 255);
+        g.pixels[idx + 2] = Math.floor(f3 * 255);
+        g.pixels[idx + 3] = 255;
+      }
+
+      g.updatePixels();
+    },
+
     setCommonPostUniforms(shader, sourceTexture) {
+      this.updateFBMTexture();
       try {
         shader.setUniform('tex0', sourceTexture);
         shader.setUniform('ambientTexture', this.layers.ambientTexture);
         shader.setUniform('currentTexture', this.layers.currentTexture);
+        shader.setUniform("fbmTexture", this.layers.fbmTexture);
+        shader.setUniform("staticFbmTexture", this.layers.staticFbmTexture);
         shader.setUniform('uResolution', [p.width, p.height]);
         shader.setUniform('uTime', p.millis() / 1000.0);
         shader.setUniform('skipTexture', 0);
@@ -125,9 +239,9 @@ export async function createRenderer(p) {
         shader.setUniform('uChromaBackground', this.colorToVec4(chroma.background));
         shader.setUniform('uChromaAmbient', this.colorToVec4(chroma.ambient));
         shader.setUniform('uChromaEnemy', this.colorToVec4(chroma.enemy));
-        
-        
-        
+
+
+
       } catch (err) {
         console.error('Error setting post shader uniforms:', err);
       }
@@ -238,7 +352,10 @@ export async function createRenderer(p) {
       p.image(this.layers.uiLayer, -p.width / 2, -p.height / 2, p.width, p.height);
       // p.image(this.layers.currentTexture, -p.width / 2, -p.height / 2, p.width, p.height);
       // p.image(this.layers.worldLayer, -p.width / 2, -p.height / 2, p.width, p.height);
-      
+      // p.drawingContext.disable(p.drawingContext.DEPTH_TEST);
+      // p.image(this.layers.fbmTexture, -p.width / 2, -p.height / 2, p.width, p.height);
+      // p.image(this.layers.staticFbmTexture, -p.width / 2, -p.height / 2, p.width, p.height);
+
 
       // Check renderer readiness
       if (!this.ready && Object.keys(this._pendingShaders).length === 0) {
