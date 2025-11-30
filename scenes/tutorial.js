@@ -29,8 +29,5 @@ export class TutorialScene extends Level1Scene {
     draw() {
         super.draw();
         const ui = this.p.shared.renderer.layers.uiLayer;
-        ui.text("HELLLO", 100, 100);
-
-
     }
 }
