@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision mediump float;
+precision lowp float;
 #endif
 
 uniform sampler2D tex0;
@@ -18,7 +18,6 @@ uniform vec4 uChromaCurrent;
 uniform vec4 uChromaBackground;
 uniform vec4 uChromaAmbient;
 uniform vec4 uChromaEnemy;
-
 uniform int skipTexture;
 
 varying vec2 vTexCoord;
@@ -58,7 +57,7 @@ float fbm(vec2 p) {
 }
 
 float texFBM(vec2 uv) {
-    return fbm(uv);
+  return fbm(uv);
   vec3 lookup = texture2D(fbmTexture, fract(uv)).rgb;
 
   // Weighted combination of the three octaves
@@ -382,7 +381,7 @@ vec4 renderEnemyLayer(vec2 uv) {
   // 1. Base yellow‑tan body tone
   // ------------------------------------------------------------
   float n = noise(uv * 40.0 + uTime * 0.2);
-//   vec3 baseBody = mix(vec3(0.90, 0.78, 0.44), vec3(0.70, 0.55, 0.28), n);
+  //   vec3 baseBody = mix(vec3(0.90, 0.78, 0.44), vec3(0.70, 0.55, 0.28), n);
   vec3 baseBody = mix(vec3(0.90, 0.58, 0.34), vec3(0.70, 0.25, 0.08), n);
 
   // ------------------------------------------------------------
@@ -458,6 +457,10 @@ vec4 renderWater(vec2 uv) {
   // Flatten contrast further; strongly discourage distinct clover/bubble edges
   combined = smoothstep(0.45, 0.98, combined);
 
+  // Cheap mid/high highlight puff
+  float puff = smoothstep(0.50, 0.95, combined);
+  combined += puff * 3.5; // bump this number to taste (0.1–0.22)
+
   // Add a soft radial-ish gradient similar to the reference
   //   combined *= exp(-length2(abs(0.7 * uv - 1.0)));
 
@@ -479,7 +482,7 @@ vec4 renderWater(vec2 uv) {
 
   // Blend in a broad, soft nebula term to reduce tight circular hotspots
   vec3 nebulaColor = vec3(0.02, 0.35, 0.65) * (combined * 0.6 + nebula * 0.8);
-  worleyColor = mix(worleyColor, nebulaColor, 0.6);
+  worleyColor = mix(worleyColor, nebulaColor, 0.8);
 
   // Add a subtle volumetric band tint (deep, slightly bluer glow)
   worleyColor += vec3(0.0, 0.40, 0.90) * volBand * 0.4;
@@ -491,6 +494,9 @@ vec4 renderWater(vec2 uv) {
 
   // Blend depth gradient with caustic/nebula/volumetric field
   vec3 waterColor = mix(depthColor, worleyColor, 0.6);
+
+  vec3 softFogTint = vec3(0.08, 0.22, 0.28);
+  waterColor += softFogTint * (combined * 0.12);
 
   // Subtle volumetric-like light shafts (inspired by buffer/post pass)
   const int NUM_SHAFT_SAMPLES = 16;
@@ -574,6 +580,10 @@ vec4 renderWater(vec2 uv) {
   float particleMask = smoothstep(0.80, 0.96, base);
 
   waterColor += vec3(0.12, 0.30, 0.38) * particleMask * 0.55 * flowAlpha;
+
+  float micro = fbm(uv * 3.0 + uTime * 0.1);
+  float high = smoothstep(0.85, 0.98, micro);
+  waterColor += vec3(0.03, 0.08, 0.12) * high;
 
   return vec4(waterColor, 1.0);
 }

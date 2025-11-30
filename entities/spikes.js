@@ -160,9 +160,9 @@ export class Spikes extends BaseEntity {
         const bases = [14, 20, 26, 32, 38, 44, 50];
         for (let b of bases) {
             g.beginShape();
-            g.vertex(b - 2, 64);
-            g.vertex(b + 2, 64);
-            g.vertex(b, 48);
+            g.vertex(b - 2, 50 + Math.random() * 14);
+            g.vertex(b + 2, 50 + Math.random() * 14);
+            g.vertex(b, 40 + Math.random() * 8);
             g.vertex(b + (Math.random()*4 - 2), 30);
             g.vertex(b + (Math.random()*6 - 3), 16);
             g.endShape(this.p.CLOSE);

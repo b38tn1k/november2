@@ -181,8 +181,8 @@ export const mainSketch = (p) => {
 
     p.shared.sceneManager.continue = true;
 
-    // p.shared.sceneManager.register('gameover', GameOverScene);    // Start with menu
-    p.shared.sceneManager.change('menu');
+    // p.shared.sceneManager.change('menu');
+    p.shared.sceneManager.change('level7');
 
     // final canvas initialization
     initializeCanvasPostSetup(p);

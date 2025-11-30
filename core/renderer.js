@@ -106,12 +106,15 @@ export async function createRenderer(p) {
       // this.layers.fbmTexture.save('static_fbm.png');
       // this.layers.staticFbmTexture.save('static_fbm.png');
 
+      // await this.loadShader('default', './shaders/post.vert', './shaders/post.frag');
       // await this.loadShader('default', './shaders/testing_and_old/monet.vert', './shaders/testing_and_old/monet.frag');
+      // await this.loadShader('chroma', './shaders/chroma.vert', './shaders/AK_terrain3.frag');
+
       // await this.loadShader('default', './shaders/testing_and_old/nes.vert', './shaders/testing_and_old/nes.frag');
-      await this.loadShader('default', './shaders/post.vert', './shaders/default.frag');
-      // await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
+      await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
       await this.loadShader('chroma', './shaders/chroma.vert', './shaders/AK_t3_crimes.frag');
       // await this.loadShader('chroma', './shaders/chroma.vert', './shaders/AK_terrain3.frag');
+      
 
     },
 
