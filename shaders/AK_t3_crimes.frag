@@ -58,6 +58,7 @@ float fbm(vec2 p) {
 }
 
 float texFBM(vec2 uv) {
+    return fbm(uv);
   vec3 lookup = texture2D(fbmTexture, fract(uv)).rgb;
 
   // Weighted combination of the three octaves
@@ -381,7 +382,8 @@ vec4 renderEnemyLayer(vec2 uv) {
   // 1. Base yellow‑tan body tone
   // ------------------------------------------------------------
   float n = noise(uv * 40.0 + uTime * 0.2);
-  vec3 baseBody = mix(vec3(0.90, 0.78, 0.44), vec3(0.70, 0.55, 0.28), n);
+//   vec3 baseBody = mix(vec3(0.90, 0.78, 0.44), vec3(0.70, 0.55, 0.28), n);
+  vec3 baseBody = mix(vec3(0.90, 0.58, 0.34), vec3(0.70, 0.25, 0.08), n);
 
   // ------------------------------------------------------------
   // 2. Voronoi "chromatophore blobs"

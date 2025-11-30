@@ -45,17 +45,13 @@ export class Level1Scene extends BaseScene {
         
         r.drawScene(() => {
             if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
-                // this.drawTerrainBlocking(layers.worldLayer);
                 this.drawCurrentsUniformTexture();
-                // this.drawCurrentsLayer(layers.worldLayer, { skipGenerated: true });
-                // this.drawCurrentsLayer(layers.worldLayer, { skipGenerated: false });
                 this.drawTerrainOrganic(layers.worldLayer, {
                     noiseScale: 3.5,
                     noiseAmp: 0.4,
                     cornerSmooth: 0.45
                 });
                 this.drawWorldBoundary(layers.worldLayer);
-                // this.drawWorldGrid(layers.worldLayer);
             }
             for (const entity of this.entities) {
                 entity.draw(layers.entitiesLayer, layers.ambientTexture);

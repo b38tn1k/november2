@@ -22,7 +22,7 @@ export class GameOverScene extends BaseScene {
     update() {
         const r = this.p.shared.renderer;
         r.markDirty('uiLayer');
-        r.markDirty('backgroundLayer');
+        // r.markDirty('backgroundLayer');
     }
 
     draw() {

@@ -114,6 +114,13 @@ export class StarFishAndCoral extends BaseEntity {
         super.cleanup();
         this.shapeTexture = null;
         if (this.colorTexture) {
+            const gl = this.colorTexture._renderer?.GL;
+            const tex = this.colorTexture._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
             this.colorTexture.remove();
             this.colorTexture = null;
         }

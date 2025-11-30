@@ -72,6 +72,28 @@ export class PathFollower extends BaseEntity {
     cleanup() {
         super.cleanup();
         this.path = [];
+        if (this.shapeTexture) {
+            const gl = this.shapeTexture._renderer?.GL;
+            const tex = this.shapeTexture._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
+            this.shapeTexture.remove();
+            this.shapeTexture = null;
+        }
+        if (this.colorTexture) {
+            const gl = this.colorTexture._renderer?.GL;
+            const tex = this.colorTexture._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
+            this.colorTexture.remove();
+            this.colorTexture = null;
+        }
     }
 
     onCurrent(particle, current) {
@@ -241,7 +263,7 @@ export class PathFollower extends BaseEntity {
         texture.image(this.colorTexture, 0, 0, dims, dims);
         // texture.translate(-x, -y);
         texture.pop();
-   
+
         // for (let point of this.path) {
         //     const { x, y } = this.scene.worldToScreen(point);
         //     const dims = Math.floor(this.pxSize * 6);

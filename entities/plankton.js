@@ -91,10 +91,24 @@ export class Plankton extends BaseEntity {
     cleanup() {
         super.cleanup();
         if (this.shapeTexture) {
+            const gl = this.shapeTexture._renderer?.GL;
+            const tex = this.shapeTexture._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
             this.shapeTexture.remove();
             this.shapeTexture = null;
         }
         if (this.colorTexture) {
+            const gl = this.colorTexture._renderer?.GL;
+            const tex = this.colorTexture._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
             this.colorTexture.remove();
             this.colorTexture = null;
         }
@@ -192,7 +206,7 @@ export class Plankton extends BaseEntity {
                                 layer2.stroke(tcolor);
                             } else {
                                 layer2.fill(rcolor);
-                                layer2.stroke(rcolor); 
+                                layer2.stroke(rcolor);
                             }
                             layer.rect(xPos, yPos, pixelSize, pixelSize);
                             layer2.rect(xPos, yPos, pixelSize, pixelSize);

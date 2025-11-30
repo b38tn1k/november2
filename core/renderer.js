@@ -46,7 +46,8 @@ export async function createRenderer(p) {
     activeShader: null,
     activePostShader: 'default',
     layerDirty: {},
-    layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer', 'ambientTexture', 'currentTexture'],
+    // layerNames: ['backgroundLayer', 'worldLayer', 'entitiesLayer', 'uiLayer', 'ambientTexture', 'currentTexture'],
+    layerNames: ['worldLayer', 'entitiesLayer', 'uiLayer', 'ambientTexture', 'currentTexture'],
     _pendingShaders: {},
     _shaderCache: new Map(),
     frameCount: 0,
@@ -219,7 +220,10 @@ export async function createRenderer(p) {
     },
 
     setCommonPostUniforms(shader, sourceTexture) {
-      this.updateFBMTexture();
+      if (p.frameCount % 5 === 0) {
+        this.updateFBMTexture();
+      }
+
       try {
         shader.setUniform('tex0', sourceTexture);
         shader.setUniform('ambientTexture', this.layers.ambientTexture);
@@ -341,7 +345,7 @@ export async function createRenderer(p) {
       // Composite onto base (2D)
       this.base.background(p.shared.chroma.background);
       const scaleFactor = p.shared.settings.graphicsScaling;
-      this.base.image(this.layers.backgroundLayer, 0, 0, p.width, p.height);
+      // this.base.image(this.layers.backgroundLayer, 0, 0, p.width, p.height);
       this.base.image(this.layers.worldLayer, 0, 0, p.width, p.height);
       this.base.image(this.layers.entitiesLayer, 0, 0, p.width, p.height);
 

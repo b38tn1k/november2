@@ -198,7 +198,7 @@ export class MenuScene extends BaseScene {
     update() {
         const [r, player, dt] = super.update();
         if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
-            r.markDirty('backgroundLayer');
+            // r.markDirty('backgroundLayer');
             r.markDirty('uiLayer');
         }
         r.markDirty('entitiesLayer');
@@ -263,7 +263,7 @@ export class MenuScene extends BaseScene {
         this.p.shared.ui.show();
         super.cleanup();
         this.title = null;
-        this.renderer.markDirty('backgroundLayer');
+        // this.renderer.markDirty('backgroundLayer');
         this.renderer.markDirty('uiLayer');
         this.renderer.markDirty('entitiesLayer');
         this.renderer.markDirty('uiLayer');

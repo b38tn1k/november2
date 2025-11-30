@@ -75,7 +75,7 @@ export class ChapterScene extends BaseScene {
     update() {
         const [r, player, dt] = super.update();
         if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
-            r.markDirty('backgroundLayer');
+            // r.markDirty('backgroundLayer');
             r.markDirty('uiLayer');
         }
         r.markDirty('entitiesLayer');

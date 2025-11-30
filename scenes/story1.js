@@ -228,7 +228,7 @@ export class ArtSceneOne extends BaseScene {
     update() {
         const r = this.renderer;
         if (this.recentlyLaunchedScene || this.recentlyChangedScene) {
-            r.markDirty('backgroundLayer');
+            // r.markDirty('backgroundLayer');
             r.markDirty('uiLayer');
         }
         r.markDirty('entitiesLayer');
@@ -355,8 +355,14 @@ export class ArtSceneOne extends BaseScene {
         this.waveInstances3.length = 0;
         this.yellowExit = null;
 
-        // graphics cleanup
         if (this.borderGraphic) {
+            const gl = this.borderGraphic._renderer?.GL;
+            const tex = this.borderGraphic._renderer?.texture;
+
+            if (gl && tex) {
+                gl.deleteTexture(tex);
+            }
+
             this.borderGraphic.remove();
             this.borderGraphic = null;
         }
