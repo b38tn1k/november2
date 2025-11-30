@@ -36,7 +36,8 @@ export class BaseScene {
     this.gameState = PLAYING;
     this.friend = null;
     this.transitionTimer = 0;
-    this.desaturateAmount = 0;
+    this.desaturateAmount = 0.0;
+    this.desaturateAmountIncrement = 1.0;
 
   }
 
@@ -366,7 +367,9 @@ export class BaseScene {
 
     if (newState === FAILED && isUpdate) {
       this.Debug.log('level', 'Level failed, restarting level.');
-      this.transitionUntil = this.p.millis() + 1000;
+      const transitionTime = 1
+      this.transitionUntil = this.p.millis() + transitionTime * 1000;
+      this.desaturateAmountIncrement = transitionTime / (this.p.frameRate());
       this.p.shared.audio.play('ohno');
     }
   }
@@ -404,7 +407,7 @@ export class BaseScene {
 
       case FAILED:
         player.ready = false;
-        this.desaturateAmount += 1;
+        this.desaturateAmount += this.desaturateAmountIncrement;
         if (this.p.millis() >= this.transitionUntil) {
           this.cleanup();
           this.init();
@@ -589,7 +592,8 @@ export class BaseScene {
     this.physicsSolver = null;
     this.levelData = null;
     this.Debug.log('level', `🧹 ${this.constructor.name} cleanup - done`);
-    this.desaturateAmount = 0;
+    this.desaturateAmount = 0.0;
+    this.desaturateAmountIncrement = 1.0;
   }
 
   // ---- Helpers -------------------------------------------------

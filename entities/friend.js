@@ -20,14 +20,16 @@ export class Friend extends BaseEntity {
         this.ambientCurrentScale = 0.5;
         // this.color = p.color('#40E0D0');
         this.color = p.color('#E0D040');
+        this.color2 = p.color('#F0B030');
 
         this.speed = 20;
-        this.speed = p.shared.settings.playerSpeed/2 || 20;
+        this.speed = p.shared.settings.playerSpeed / 2 || 20;
         this.sinkancy = p.shared.settings.playerSinkancy || 30;
         this.buoyancy = p.shared.settings.playerBuoyancy || -12.5;
         this.baseBuoyancy = p.shared.settings.playerBuoyancy || -12.5;
+        this.imageTexture = p.shared.assets['gameIllustrationAssets']['friend'];
 
-        this.away = {x: this.speed, y: this.speed};
+        this.away = { x: this.speed, y: this.speed };
 
         this.moving = {
             moveLeft: false,
@@ -131,7 +133,7 @@ export class Friend extends BaseEntity {
         }
 
         super.applyForces(dt);
-        
+
         if (!mp) return;
 
     }
@@ -147,7 +149,7 @@ export class Friend extends BaseEntity {
         this.pxSize = this.size * this.scene.mapTransform.tileSizePx;
     }
 
-    moveLongWays () {
+    moveLongWays() {
         let dx = 0;
         let dy = 0;
         const { x, y } = this.scene.worldToScreen(this.worldPos);
@@ -158,7 +160,7 @@ export class Friend extends BaseEntity {
 
         this.worldPos.x += dx;
         this.worldPos.y += dy;
-        return {x: dx/this.speed, y: dy/this.speed};
+        return { x: dx / this.speed, y: dy / this.speed };
     }
 
     draw(layer, texture) {
@@ -212,6 +214,10 @@ export class Friend extends BaseEntity {
             );
         }
 
+        // Anchor at root particle
+        const rootPos = this.scene.worldToScreen(this.physicsParticles[2].pos);
+        texture.imageMode(this.p.CENTER);
+        texture.image(this.imageTexture, rootPos.x, rootPos.y - this.pxSize / 2, this.pxSize*2.5, this.pxSize*2.5);
 
     }
 }

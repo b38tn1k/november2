@@ -97,6 +97,8 @@ export const mainSketch = (p) => {
     p.shared.assets.storyAssets['ssheetWaves'] = p.loadImage('./assets/created/raw/waves_scaled.png');
     p.shared.assets.storyAssets['bgStorm'] = p.loadImage('./assets/created/raw/storm_bg_scaled.png');
     p.shared.assets.storyAssets['bgStormTrans'] = p.loadImage('./assets/created/raw/storm_bg_trans_scaled.png');
+    p.shared.assets['gameIllustrationAssets'] = {};
+    p.shared.assets['gameIllustrationAssets'] ['friend'] = p.loadImage('./assets/created/raw/friendTexture2.png');
     p.shared.assets.audio = {};
     p.shared.assets.audio['story1'] = p.loadSound('./assets/created/anemone_script1.mp3');
     p.shared.assets.audio['story2'] = p.loadSound('./assets/created/anemone_script2.mp3');
@@ -114,16 +116,6 @@ export const mainSketch = (p) => {
     p.shared.audio = createAudioManager(p);
 
     applyChromaMapWithDisable(p, p.shared.chroma);
-    // let colorCount = Object.keys(p.shared.chroma).length
-    // let colorAngle = 255 / colorCount;
-    // p.colorMode(p.HSL, 255);
-    // let hue = 0;
-    // let saturation = 255;
-    // let level = 128;
-    // for (let k in p.shared.chroma) {
-    //   p.shared.chroma[k] = p.color(hue, saturation, level);
-    //   hue += colorAngle;
-    // }
     p.colorMode(p.RGB, 255);
 
     setupCanvasWithAdaptation(p);
@@ -182,7 +174,7 @@ export const mainSketch = (p) => {
     p.shared.sceneManager.continue = true;
 
     p.shared.sceneManager.change('menu');
-    // p.shared.sceneManager.change('level7');
+    // p.shared.sceneManager.change('level1level');
 
     // final canvas initialization
     initializeCanvasPostSetup(p);

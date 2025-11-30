@@ -114,7 +114,7 @@ export async function createRenderer(p) {
       await this.loadShader('default', './shaders/default.vert', './shaders/default.frag');
       await this.loadShader('chroma', './shaders/chroma.vert', './shaders/AK_t3_crimes.frag');
       // await this.loadShader('chroma', './shaders/chroma.vert', './shaders/AK_terrain3.frag');
-      
+
 
     },
 
@@ -236,6 +236,7 @@ export async function createRenderer(p) {
         shader.setUniform('uResolution', [p.width, p.height]);
         shader.setUniform('uTime', p.millis() / 1000.0);
         shader.setUniform('skipTexture', 0);
+        shader.setUniform('desaturateAmount', p.shared.sceneManager.current.desaturateAmount || 0.0);
 
         const chroma = p.shared.chroma;
         shader.setUniform('uChromaPlayer', this.colorToVec4(chroma.player));
@@ -362,6 +363,7 @@ export async function createRenderer(p) {
       // p.drawingContext.disable(p.drawingContext.DEPTH_TEST);
       // p.image(this.layers.fbmTexture, -p.width / 2, -p.height / 2, p.width, p.height);
       // p.image(this.layers.staticFbmTexture, -p.width / 2, -p.height / 2, p.width, p.height);
+      // p.image(this.layers.ambientTexture, -p.width / 2, -p.height / 2, p.width, p.height);
 
 
       // Check renderer readiness
