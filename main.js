@@ -87,6 +87,9 @@ export const mainSketch = (p) => {
     // p.shared.mainFont = p.loadFont('./assets/found/Comic_Neue/ComicNeue-Regular.ttf');
     p.shared.levels = p.loadJSON('./config/levels.json');
     p.shared.chroma = p.loadJSON('./config/chroma.json');
+    p.shared.assets['textures'] = {};
+    // p.shared.assets['textures']['rocks'] = p.loadImage('./assets/created/peruRocks.png');
+    p.shared.assets['textures']['patterned_waves'] = p.loadImage('./assets/created/waves_patterned.png');
     p.shared.assets['storyAssets'] = {};
     p.shared.assets.storyAssets['bg1'] = p.loadImage('./assets/created/raw/story_bg_1.png');
     p.shared.assets.storyAssets['bg2'] = p.loadImage('./assets/created/raw/story_bg_2.png');

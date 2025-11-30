@@ -39,6 +39,8 @@ export class BaseScene {
     this.desaturateAmount = 0.0;
     this.desaturateAmountIncrement = 1.0;
 
+    this.waveSprites = [];
+    this.waveInitialized = false;
   }
 
   init() {
@@ -363,6 +365,25 @@ export class BaseScene {
       this.transitionUntil = this.p.millis() + 1500;
       this.Debug.log('level', 'Level completed, transitioning to next scene:', this.nextScene);
       this.p.shared.audio.play('noise_wave');
+      // initialize patterned wave sprites
+      this.waveSprites = [];
+      this.waveInitialized = true;
+      const tex = this.p.shared.assets['textures']['patterned_waves'];
+      const duration = 1000; // matches transition timing
+      for (let i = 0; i < 5; i++) {
+        const startX = this.renderer.layers.uiLayer.width + tex.width * (1 + Math.random()*3);
+        const startY = Math.random() * (this.renderer.layers.uiLayer.height - tex.height/4);
+        const endX = -tex.width;
+
+        // parallax speed variation (0.7x – 1.3x)
+        const speedBase = (startX - endX) / duration;
+        const speed = speedBase * (1.0 + Math.random() * 0.6);
+
+        // random staggered start delay (0–400ms)
+        const delay = Math.random() * 400;
+
+        this.waveSprites.push({ x: startX, y: startY, speed, delay, started: false });
+      }
     }
 
     if (newState === FAILED && isUpdate) {
@@ -388,6 +409,17 @@ export class BaseScene {
       case PLAYING:
         break;
       case COMPLETED:
+        if (this.waveInitialized) {
+          const tex = this.p.shared.assets['textures']['patterned_waves'];
+          for (const w of this.waveSprites) {
+            if (!w.started) {
+              w.delay -= dt * 1000.0;
+              if (w.delay <= 0) w.started = true;
+              continue;
+            }
+            w.x -= w.speed * dt * 1000.0;
+          }
+        }
         player.ready = false;
         let dir = this.friend.moveLongWays();
         const r = Math.floor(this.p.map(dir.x, -1, 1, 0, 255));
@@ -570,8 +602,15 @@ export class BaseScene {
     for (const el of this.uiElements) {
       el.draw(uiLayer, shaderLayer);
       // this.Debug.log('level', 'Drawing UI element:', el);
+
     }
-    // }
+
+    if (this.gameState === COMPLETED) {
+      const tex = this.p.shared.assets['textures']['patterned_waves'];
+      for (const w of this.waveSprites) {
+        uiLayer.image(tex, w.x, w.y, tex.width, tex.height);
+      }
+    }
   }
 
   cleanup() {

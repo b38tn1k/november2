@@ -1,5 +1,5 @@
 export const Settings = {
-    fps: 60,
+    fps: 30,
     pixelDensity: 1,
     graphicsScaling: 1,
     debounceTime: 30, // ms
