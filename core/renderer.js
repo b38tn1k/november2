@@ -353,6 +353,8 @@ export async function createRenderer(p) {
       this.base.image(this.layers.worldLayer, 0, 0, p.width, p.height);
       this.base.image(this.layers.entitiesLayer, 0, 0, p.width, p.height);
 
+      // this.base.background(p.shared.chroma.background);
+
       // Run dual-pass shader pipeline to draw to the main canvas
       this.runDualPass();
 
