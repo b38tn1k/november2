@@ -61,51 +61,35 @@
     "currentsLegend": {
         "a": {
             "dx": -5,
-            "dy": 0,
-            "style": "current",
-            "params": {}
+            "dy": 0
         },
         "b": {
             "dx": 5,
-            "dy": 0,
-            "style": "current",
-            "params": {}
+            "dy": 0
         },
         "c": {
             "dx": 0,
-            "dy": -5,
-            "style": "current",
-            "params": {}
+            "dy": -5
         },
         "d": {
             "dx": 0,
-            "dy": 5,
-            "style": "current",
-            "params": {}
+            "dy": 5
         },
         "i": {
             "dx": 5,
-            "dy": 5,
-            "style": "current",
-            "params": {}
+            "dy": 5
         },
         "j": {
             "dx": -5,
-            "dy": 5,
-            "style": "current",
-            "params": {}
+            "dy": 5
         },
         "k": {
             "dx": -5,
-            "dy": -5,
-            "style": "current",
-            "params": {}
+            "dy": -5
         },
         "l": {
             "dx": 5,
-            "dy": -5,
-            "style": "current",
-            "params": {}
+            "dy": -5
         }
     },
     "entityLegend": {
@@ -132,11 +116,11 @@
             "direction": "down",
             "count": 3
         },
-         "r": {
+        "r": {
             "type": "grass",
             "direction": "right",
             "count": 3
-        } ,
+        },
         "k": {
             "type": "grass",
             "direction": "left",

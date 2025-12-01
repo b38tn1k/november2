@@ -63,35 +63,51 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -201,15 +217,21 @@
     "currentsLegend": {
       "q": {
         "dx": 6,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "w": {
         "dx": -5,
-        "dy": 1
+        "dy": 1,
+        "style": "current",
+        "params": {}
       },
       "e": {
         "dx": -2,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -284,15 +306,21 @@
     "currentsLegend": {
       "a": {
         "dx": 8,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": -8,
-        "dy": 10
+        "dy": 10,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": -8,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -368,23 +396,33 @@
     "currentsLegend": {
       "b": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "f": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "u": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "r": {
         "dx": 3,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -469,15 +507,21 @@
     "currentsLegend": {
       "a": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -574,15 +618,21 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": -10,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -666,23 +716,33 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "g": {
         "dx": -25,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -770,39 +830,57 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "g": {
         "dx": -25,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -896,39 +974,57 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "g": {
         "dx": -25,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -1021,35 +1117,51 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -1163,35 +1275,51 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -1252,7 +1380,7 @@
         "........#.###.#......",
         "..........#.####.....",
         "............######...",
-        "....##.......###.#...",
+        "....##.......#.###...",
         "..E.##..............."
       ],
       "currents": [
@@ -1267,7 +1395,7 @@
         ".......jj.#.####.iii.",
         ".........j..#.####...",
         "....###...j..#.###...",
-        "bb.a###cjaaaaaaaaaaaa"
+        "bb.a###caaaaaaaaaaaaa"
       ],
       "hazards": [
         ".....................",
@@ -1287,49 +1415,65 @@
         ".....................",
         "........F....I..HHHH.",
         "........F....I..H..H.",
-        "###..#....g..I..HHHH.",
+        "###..#.......I..HHHH.",
         ".######...#..........",
-        "......###.#...g......",
-        "TTm..m#.###...#......",
+        "......###.#..........",
+        "TT....#.###...#......",
         "........#.###.#......",
-        "..........#.###..gg..",
+        "..........#.###......",
         "............#.####...",
         "....###......#.###...",
-        "....###............gg"
+        "....###.............."
       ]
     },
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
@@ -1447,35 +1591,51 @@
     "currentsLegend": {
       "a": {
         "dx": -5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "b": {
         "dx": 5,
-        "dy": 0
+        "dy": 0,
+        "style": "current",
+        "params": {}
       },
       "c": {
         "dx": 0,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "d": {
         "dx": 0,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "i": {
         "dx": 5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "j": {
         "dx": -5,
-        "dy": 5
+        "dy": 5,
+        "style": "current",
+        "params": {}
       },
       "k": {
         "dx": -5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       },
       "l": {
         "dx": 5,
-        "dy": -5
+        "dy": -5,
+        "style": "current",
+        "params": {}
       }
     },
     "entityLegend": {
