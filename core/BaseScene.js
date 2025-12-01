@@ -372,7 +372,7 @@ export class BaseScene {
       const duration = 1000; // matches transition timing
       for (let i = 0; i < 5; i++) {
         const startX = this.renderer.layers.uiLayer.width + tex.width * (1 + Math.random()*3);
-        const startY = Math.random() * (this.renderer.layers.uiLayer.height - tex.height/4);
+        const startY = Math.random() * (this.renderer.layers.uiLayer.height + tex.height/2) - tex.height/4;
         const endX = -tex.width;
 
         // parallax speed variation (0.7x – 1.3x)
@@ -606,6 +606,7 @@ export class BaseScene {
     }
 
     if (this.gameState === COMPLETED) {
+      uiLayer.imageMode(this.p.CENTER);
       const tex = this.p.shared.assets['textures']['patterned_waves'];
       for (const w of this.waveSprites) {
         uiLayer.image(tex, w.x, w.y, tex.width, tex.height);
